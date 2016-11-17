@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/src/planner.h
+map
+-
+vector
+-
+iostream
+-
+string
+-
+cmath
+-
+
+/Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/src/print_path.cpp
+planner.h
+/Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/src/planner.h
+
