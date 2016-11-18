@@ -11,14 +11,25 @@ int main(int argc, char *argv[])
 {
     Planner P;
     P.SetGrid();
-    Grid G = P.GetGrid();
-//    for (Grid::iterator it=G.begin(); it!=G.end(); ++it) {
-//        cout<<it->X<<'\t'<<it->Y<<endl;
+//    TVecCoord G = P.GetGrid();
+//    for (TVecCoord::iterator it=G.begin(); it!=G.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
 //    }
+    
     Coordinate tStart=pair<float,float>(10,10);
     Coordinate tGoal=pair<float,float>(110,110);
-    PathXY tPath=P.AStarSearch(tStart,tGoal,P.m_fStepX,P.m_fStepY);
-    for (PathXY::iterator it=tPath.begin(); it!=tPath.end(); ++it) {
+    
+    TVecCoord tCenterBoxes;
+    tCenterBoxes.push_back(make_pair(50,50));
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
+//    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
+//    
+    TVecCoord tPath=P.AStarSearch(tStart,tGoal,tObstacles);
+    for (TVecCoord::iterator it=tPath.begin(); it!=tPath.end(); ++it) {
         cout<<it->first<<'\t'<<it->second<<endl;
     }
+    
 }

@@ -1,7 +1,7 @@
 
 #include "planner.h"
 
-PathXY Planner::CircleArc(Coordinate t_start, Coordinate t_goal, double n_Radius, double db_NumberWayPoints)
+TVecCoord Planner::CircleArc(Coordinate t_start, Coordinate t_goal, double n_Radius, double db_NumberWayPoints)
 {
     float nX1=t_start.first;
     float nX2=t_goal.first;
@@ -15,7 +15,7 @@ PathXY Planner::CircleArc(Coordinate t_start, Coordinate t_goal, double n_Radius
     float dbCenterRotX;
     float dbCenterRotY;
     float dbGamma;
-    PathXY tArc;
+    TVecCoord tArc;
     
     tArc.push_back(make_pair(nX1,nY1));
     
@@ -79,68 +79,69 @@ void Planner::SetGrid()
     m_fStepY=ArenaDepth/m_nNumberStepsY;
     for (int i=0; i<m_nNumberStepsX; ++i) {
         for (int j=0; j<m_nNumberStepsY; ++j) {
-            Node temp;
-            temp.X=i*m_fStepX;
-            temp.Y=j*m_fStepY;
-            m_tGrid.push_back(temp);
+            m_tGrid.push_back(make_pair(i*m_fStepX,j*m_fStepY));
         }
     }
-
 }
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 
 
-PathXY Planner::AStarSearch(Coordinate t_start, Coordinate t_goal ,float f_stepX ,float f_stepY)
+TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord t_obstacles)
 {
 
-    Grid tOpen;
-    Grid tSuccessors;
-    Grid tClosed;
-    PathXY tPath;
-    
+    TVecNode tOpen;
+    TVecNode tNeighbors;
+    TVecNode tClosed;
+    TVecCoord tPath;
 
     float fXGoal=t_goal.first;
     float fYGoal=t_goal.second;
     bool bGoalReached=false;
     
+    TVecCoord::iterator it5=min_element(m_tGrid.begin(),m_tGrid.end(),Distance(t_start));
+    
     Node tStart;
-    tStart.X=t_start.first;
-    tStart.Y=t_start.second;
+    tStart.X=it5->first;
+    tStart.Y=it5->second;
+    
     tOpen.push_back(tStart);
     
     while (!tOpen.empty() && !bGoalReached) {
         
-        tSuccessors.clear();
-        Grid::iterator it=min_element(tOpen.begin(),tOpen.end(),LessThanByCost());
-        Node q=*it;
+        tNeighbors.clear();
+        TVecNode::iterator it=min_element(tOpen.begin(),tOpen.end(),LessThanByCost());
+        Node tCurrent=*it;
         
         tOpen.erase(it);
         
         for (int i=-1; i<2; ++i) {
             for (int j=-1; j<2; ++j) {
                 if (j!=0) {
-                    float tempX=q.X+i*f_stepX;
-                    float tempY=q.Y+j*f_stepY;
-                    if (tempX>0 && tempY>0) {
-                        Node temp;
-                        temp.X=tempX;
-                        temp.Y=tempY;
-                        temp.g=q.g + pow(tempX-q.X,2) + pow(tempY-q.Y,2);
-                        temp.h=pow(fXGoal-tempX,2) + pow(fYGoal-tempY,2);
-                        temp.f=temp.g+temp.h;
-                        tSuccessors.push_back(temp);
+                    float fTempX=tCurrent.X+i*m_fStepX;
+                    float fTempY=tCurrent.Y+j*m_fStepY;
+                    if (fTempX>0 && fTempY>0) {
+                        TVecCoord::iterator it4=find_if(t_obstacles.begin(),t_obstacles.end(),CompareXandYCoord(fTempX,fTempY));
+                        if (it4==t_obstacles.end()) {
+                            Node tTemp;
+                            tTemp.X=fTempX;
+                            tTemp.Y=fTempY;
+                            tTemp.g=tCurrent.g + pow(fTempX-tCurrent.X,2) + pow(fTempY-tCurrent.Y,2);
+                            tTemp.h=pow(fXGoal-fTempX,2) + pow(fYGoal-fTempY,2);
+                            tTemp.f=tTemp.g+tTemp.h;
+                            tNeighbors.push_back(tTemp);
+                        }
                     }
                 }
             }
         }
 
-        for (Grid::iterator it1=tSuccessors.begin(); it1!=tSuccessors.end(); ++it1) {
-            float SuccX=it1->X;
-            float SuccY=it1->Y;
-            float Succf=it1->f;
-            if ((abs(SuccX-fXGoal)<f_stepX/2) && (abs(SuccY-fYGoal)<f_stepY/2)) { //break in previous loop?
+        for (TVecNode::iterator it1=tNeighbors.begin(); it1!=tNeighbors.end(); ++it1) {
+            float fNeighborX=it1->X;
+            float fNeighborY=it1->Y;
+            float fNeighborCost=it1->f;
+            if ((abs(fNeighborX-fXGoal)<m_fStepX/2) && (abs(fNeighborY-fYGoal)<m_fStepY/2)) {
                 bGoalReached=true;
                 //tClosed.push_back(*it1);
                 break;
@@ -148,14 +149,14 @@ PathXY Planner::AStarSearch(Coordinate t_start, Coordinate t_goal ,float f_stepX
             else
             {
                 bool bState=true;
-                Grid::iterator it2=find_if(tOpen.begin(),tOpen.end(),CompareXandY(SuccX,SuccY));
-                Grid::iterator it3=find_if(tClosed.begin(),tClosed.end(),CompareXandY(SuccX,SuccY));
+                TVecNode::iterator it2=find_if(tOpen.begin(),tOpen.end(),CompareXandY(fNeighborX,fNeighborY));
+                TVecNode::iterator it3=find_if(tClosed.begin(),tClosed.end(),CompareXandY(fNeighborX,fNeighborY));
                 
-                if ( (it2!=tOpen.end()) && ((it2->f)<Succf) ) {
+                if ( (it2!=tOpen.end()) && ((it2->f)<fNeighborCost) ) {
                     bState=false;
                     
                 }
-                else if (it3!=tClosed.end() && ((it3->f)<Succf)) {
+                else if (it3!=tClosed.end() && ((it3->f)<fNeighborCost)) {
                     bState=false;
                 }
                 if (bState) {
@@ -163,10 +164,10 @@ PathXY Planner::AStarSearch(Coordinate t_start, Coordinate t_goal ,float f_stepX
                 }
             }
         }
-        tClosed.push_back(q);
+        tClosed.push_back(tCurrent);
     }
     
-    for (Grid::iterator it=tClosed.begin(); it!=tClosed.end(); ++it) {
+    for (TVecNode::iterator it=tClosed.begin(); it!=tClosed.end(); ++it) {
         tPath.push_back(make_pair(it->X,it->Y));
     }
     
@@ -176,82 +177,47 @@ PathXY Planner::AStarSearch(Coordinate t_start, Coordinate t_goal ,float f_stepX
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 
-//bool Planner::Comp(const float& f1,const float& f2){
-//    return f1
-//}
+TVecCoord Planner::MapObstacles(TVecCoord t_centerBoxes){
+    
+    TVecCoord tObstacles;
+    float fCenterX;
+    float fCenterY;
+    float fXMax;
+    float fXMin;
+    float fYMax;
+    float fYMin;
+    Coordinate tMin;
+    Coordinate tMax;
+    
+    float fRadius=sqrt(2)/2*BoxSize; //circumsquare of box
+    
+    for (TVecCoord::iterator it=t_centerBoxes.begin(); it!=t_centerBoxes.end(); ++it) {
+        fCenterX=it->first;
+        fCenterY=it->second;
+        
+        fXMax=fCenterX+fRadius;
+        fXMin=fCenterX-fRadius;
+        fYMax=fCenterY+fRadius;
+        fYMin=fCenterY-fRadius;
+        
+        tMin=make_pair(fXMin,fYMin);
+        tMax=make_pair(fXMax,fYMax);
+        
+        for (TVecCoord::iterator it1=m_tGrid.begin(); it1!=m_tGrid.end(); ++it1) {
+            if ( (*it1 < tMax) && (*it1 >tMin) ) {
+                tObstacles.push_back(*it1);
+            }
+        }
+    }
+    return tObstacles;
+}
 
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
 
 Planner::Planner(){
     
 }
 
 
-//void planner::a_star_search
-//(const Graph& graph,
-// typename Graph::Location start,
-// typename Graph::Location goal,
-// unordered_map<typename Graph::Location, typename Graph::Location>& came_from,
-// unordered_map<typename Graph::Location, double>& cost_so_far)
-//{
-//    PriorityQueue<Location, double> frontier;
-//    frontier.put(start, 0);
-//
-//    came_from[start] = start;
-//    cost_so_far[start] = 0;
-//
-//    while (!frontier.empty()) {
-//        auto current = frontier.get();
-//
-//        if (current == goal) {
-//            break;
-//        }
-//
-//        for (auto next : graph.neighbors(current)) {
-//            double new_cost = cost_so_far[current] + graph.cost(current, next);
-//            if (!cost_so_far.count(next) || new_cost < cost_so_far[next]) {
-//                cost_so_far[next] = new_cost;
-//                double priority = new_cost + heuristic(next, goal);
-//                frontier.put(next, priority);
-//                came_from[next] = current;
-//            }
-//        }
-//    }
-//}
-
-
-//int nLength=abs(n_x1-n_x2);
-//if(nLength%2!=0) nLength-=1;
-//int nRemainder=0;
-//int nStep=0;
-//
-//for (int i=n_MaxSubdiv; i>0; --i) {
-//    nRemainder=nLength%i;
-//    nStep=nLength/i; // Euclidian division
-//    if(nStep>=100){
-//        if(nRemainder==0) break;
-//        else {
-//            nStep+=nRemainder;
-//            break;
-//        }
-//    }
-//}
-//
-//int nNumberXStepsOrig=min(nX1,nX2)/nXStep; // Euclidian division
-//int nNumberYStepsOrig=min(nY1,nY2)/nYStep; // Euclidian division
-//
-//int nFirstX=min(nX1,nX2)-nNumberYStepsOrig*nXStep;
-//int nFirstY=min(nY1,nY2)-nNumberYStepsOrig*nYStep;
-//
-//int nNumberXSteps=(ArenaWidth-nNumberXStepsOrig)/nXStep;
-//int nNumberYSteps=(ArenaWidth-nNumberYStepsOrig)/nYStep;
-//
-//
-//float fStep=fLength/fSubdiv;
-//
-//for (int i=0; i<nNumberXSteps; ++i) {
-//    for (int j=0; j<nNumberYSteps; ++j) {
-//        m_tGrid.insert(make_pair(nFirstX+i*nXStep,nFirstY+j*nYStep));
-//    }
-//}
-//
 
