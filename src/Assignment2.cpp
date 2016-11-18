@@ -6,6 +6,7 @@
 #include <thread>
 #include <cmath>
 
+#include "planner.h"
 #include "rbe510.hpp"
 #include <opencv2/core.hpp>
 #include "rectification.hpp"
@@ -24,11 +25,13 @@ using namespace cv;
 #define GREEN_ID 0
 #define BLUE_ID 5
 
+/*
 struct location {
     float x;
     float y;
     float orientation;
 };
+*/
 
 class PID {
 public:
@@ -134,7 +137,7 @@ void FollowTrajectory(int id, FieldComputer fc, PerspectiveCorrection correction
 	}
 }
 
-vector<CubicBezier> TrajectoryFromWaypointsAndHeadings(vector<location> input) {
+vector<CubicBezier> TrajectoryFromWaypointsAndHeadings(vector<Location> input) {
 	// first in pair is Point containing metric coordinates
 	// second in pair is heading at waypoint in degrees
 	// Returns series of cubic bezier curves that provide a continuous path intersecting all waypoints at specified headings
@@ -142,11 +145,12 @@ vector<CubicBezier> TrajectoryFromWaypointsAndHeadings(vector<location> input) {
 	vector<CubicBezier> output;
 
 	for (int i = 0; i < input.size() - 1; i++) {
-		output.push_back(CubicBezier(input[i].x, input[i].y, input[i].orientation, input[i+1].x, input[i+1].y, input[i+1].orientation, 0.5));
+		output.push_back(CubicBezier(input[i].X, input[i].Y, input[i].Orientation, input[i+1].X, input[i+1].Y, input[i+1].Orientation, 0.5));
 	}
 	return output;
 }
 
+/*
 void TrackRobot(int inputId, PerspectiveCorrection correction, FieldComputer fc) {
     FieldData data = fc.getFieldData();
     while(true){
@@ -163,6 +167,7 @@ void TrackRobot(int inputId, PerspectiveCorrection correction, FieldComputer fc)
         usleep(1000000);
     }   
 }
+*/
 
 int main(int argc, char *argv[])
 {
@@ -180,19 +185,44 @@ int main(int argc, char *argv[])
 	p2 << 0, 0, 0, fieldHeight, fieldWidth, fieldHeight, fieldWidth, 0;
 
 	vector<Entity> corners;
+	vector<Entity> boxes;
+	
+	Entity redBox1;
+	Entity redBox2;
+	Entity blueBox1;
+	Entity blueBox2;
+	
+	
+	Location boxStartPos0{0,0,0};
+	Location boxStartPos1{0,0,0};
+	Location boxStartPos2{0,0,0};
+	Location boxStartPos3{0,0,0};
+	
+	Location boxParkingPos0{0,0,0};
+	Location boxParkingPos1{0,0,0};
+	
+	Location boxRedDest0{0,0,0};
+	Location boxRedDest1{0,0,0};
+	
+	Location boxBlueDest0{0,0,0};
+	Location boxBlueDest1{0,0,0};
 
-	while(corners.size() < 4){
+	while(corners.size() < 4 || boxes.size() < 4){
         data = fc.getFieldData();
 		for(unsigned i = 0; i < data.entities.size(); i++){
 			if (data.entities[i].id() >= 200 && data.entities[i].id() <= 203) {
 				corners.push_back(data.entities[i]);
 			}
+			if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
+				boxes.push_back(data.entities[i]);
+			}
 		}
-		if (corners.size() < 4){
+		if (corners.size() < 4 || boxes.size() < 4){
 			corners.clear();
+			boxes.clear();
 		}
 	}
-	cout << "Found all corners" << endl;
+	cout << "Found all corners and boxes" << endl;
 
 	// Get the coordinates of each of the corners
 	for(unsigned i = 0; i < corners.size(); i++) {
@@ -218,6 +248,28 @@ int main(int argc, char *argv[])
 			p1(3,0) = corners[i].x();
 			p1(3,1) = corners[i].y();
 		}
+	}
+	
+	for (unsigned i = 0; i < boxes.size(); i++) {
+		if (boxes[i].id() == 102) {
+			// Red 1
+			redBox1 = boxes[i];
+		} else if (boxes[i].id() == 112) {
+			// Red 2
+			redBox2 = boxes[i];
+		} else if (boxes[i].id() == 101) {
+			// Blue 1
+			blueBox1 = boxes[i];
+		} else if (boxes[i].id() == 103) {
+			// Blue 2
+			blueBox2 = boxes[i];
+		}
+	}
+	
+	if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
+		
+	} else {
+
 	}
 
 	PerspectiveCorrection correction(p1, p2);
@@ -256,10 +308,10 @@ int main(int argc, char *argv[])
     //waypoints.push_back(location{0,0,30});
     //waypoints.push_back(location{231,110,30});
 
-    waypoints.push_back(location{50,50,0});
-    waypoints.push_back(location{100,50,90});
-    waypoints.push_back(location{100,100,180});
-    waypoints.push_back(location{100,100,180});
+    waypoints.push_back(Location{50,50,0});
+    waypoints.push_back(Location{100,50,90});
+    waypoints.push_back(Location{100,100,180});
+    waypoints.push_back(Location{100,100,180});
 
 	//waypoints.push_back(make_pair(make_pair(startPositionA(0,0),startPositionA(0,1)),0));
 	//waypoints.push_back(make_pair(make_pair(startPositionA(0,0),startPositionA(0,1)+75),0));
