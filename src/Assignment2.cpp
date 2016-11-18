@@ -56,14 +56,10 @@ public:
 	int xCm; //to be changed to float !
 	int yCm; //to be changed to float !
 	
-<<<<<<< HEAD
-	int xCm;
-	int yCm;
-	
-	
-=======
+
+
     /* Constructor */
->>>>>>> d1676f12ab059b75ab3808905f3207f592505492
+
 	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
 		this->box = inputBox;
 		this->boxColor = inputColor;
@@ -138,7 +134,7 @@ public:
 		}
 	}
 	
-<<<<<<< HEAD
+
 	// Update box state based on its position on the field.
 	// Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
 	// Boxes in the opposite color's zone are on the wrong side.
@@ -181,9 +177,7 @@ public:
 			}
 		}
 	}		
-=======
-	
->>>>>>> d1676f12ab059b75ab3808905f3207f592505492
+
 }
 
 class PID {
@@ -422,14 +416,13 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-<<<<<<< HEAD
+
 	// if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
 		
 	// } else {
 
 	// }
-=======
->>>>>>> d1676f12ab059b75ab3808905f3207f592505492
+
 
 	PerspectiveCorrection correction(p1, p2);
 
