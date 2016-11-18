@@ -25,20 +25,6 @@ using namespace cv;
 #define GREEN_ID 0
 #define BLUE_ID 5
 
-#define BOX_OFFSET 10
-
-// Width and height of rectangle marked by corner codes in cm
-double fieldWidth = 231.14;
-double fieldHeight = 109.86;
-
-enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
-// East = X-positive
-// North = Y-positive
-// West = X-negative
-// South = Y-negative (shouldn't ever have to push south)
-enum Direction {EAST, NORTH, WEST, SOUTH};
-enum Color{RED, BLUE, GREEN};
-
 /*
 struct location {
     float x;
@@ -46,93 +32,6 @@ struct location {
     float orientation;
 };
 */
-
-class Box {
-private:
-// Need to reference the perspective correction to get the position of the box in cm
-	PerspectiveCorrection correction;
-public:
-	Entity box;
-	Color boxColor;
-	State currentStatus;
-	
-	bool isHighPriority;
-	
-	int xCm;
-	int yCm;
-	
-	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
-		this->box = inputBox;
-		this->boxColor = inputColor;
-		this->correction = inputCorrection;
-		
-		// Perform perspecitve correction to get metric position
-		Matrix<double, 1, 3> position= correction.correctPerspectiveMetric(box.x(),box.y());
-		
-		this->xCm = position(0,0);
-		this->yCm = position(0,1);
-		
-		// Update box position based on field zone rules
-		this->currentStatus = updateBoxStatus();
-		if (boxColor == Color.RED) {
-			isHighPriority = true;
-		} else {
-			isHighPriority = false;
-		}
-	}
-	
-	// Get robot position and orientation needed to start pushing the box in the requested direction
-	Location getPushStartPosition(Direction pushDirection) {
-		Location output;
-		if (pushDirection == Direction.EAST) {
-			output.Orientation = 0;
-			output.y = yCm;
-			output.x = xCm - BOX_OFFSET;
-		} else if (pushDirection == Direction.NORTH) {
-			output.Orientation = 90;
-			output.x = xCm;
-			output.y = yCm - BOX_OFFSET;
-		} else if (pushDirection == Direction.WEST) {
-			output.Orientation = 180;
-			output.y = yCm;
-			output.x = xCm + BOX_OFFSET;
-		} else if (pushDirection == Direction.SOUTH) {
-			output.Orientation = 270;
-			output.x = xCm;
-			output.y = yCm + BOX_OFFSET;
-		}
-	}
-	
-	// Update box state based on its position on the field.
-	// Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
-	// Boxes in the opposite color's zone are on the wrong side.
-	// Boxes in the parking zone east of the red zone are parking (only low-priority (i.e. blue) boxes should end up here)
-	// Boxes in the appropriate color zone and close to the north edge of the field are done being moved
-	State updateBoxStatus() {
-		State output;
-		if (boxColor == Color.RED) {
-			if (xCm > fieldWidth/2) {
-				output = State.CORRECT_SIDE;
-				if (yCm > fieldHeight*0.75) {
-					output = State.DONE;
-				}
-			} else {
-				output = State.WRONG_SIDE;
-			}
-		} else if (boxColor == Color.BLUE) {
-			if (xCm <= fieldWidth/2) {
-				output = State.CORRECT_SIDE;
-				if (yCm > fieldHeight*0.75) {
-					output = State.DONE;
-				}
-			} else if (xCm >= fieldWidth*0.8) {
-				output = State.PARKING;
-			} else {
-				output = State.WRONG_SIDE;
-			}
-		}
-	}		
-}
 
 class PID {
 public:
@@ -278,7 +177,8 @@ int main(int argc, char *argv[])
     fc.disableVerbose();
     FieldData data = fc.getFieldData();
 
-
+    double fieldWidth = 231.14;
+	double fieldHeight = 109.86;
 
 	Eigen::Matrix<double, 4, 2> p1;
 	Eigen::Matrix<double, 4, 2> p2;
@@ -287,15 +187,11 @@ int main(int argc, char *argv[])
 	vector<Entity> corners;
 	vector<Entity> boxes;
 	
-	//Entity redBox1;
-	//Entity redBox2;
-	//Entity blueBox1;
-	//Entity blueBox2;
+	Entity redBox1;
+	Entity redBox2;
+	Entity blueBox1;
+	Entity blueBox2;
 	
-	Box redBox1;
-	Box redBox2;
-	Box blueBox1;
-	Box blueBox2;
 	
 	Location boxStartPos0{0,0,0};
 	Location boxStartPos1{0,0,0};
@@ -354,128 +250,168 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	PerspectiveCorrection correction(p1, p2);
-	
 	for (unsigned i = 0; i < boxes.size(); i++) {
 		if (boxes[i].id() == 102) {
 			// Red 1
-			redBox1 = Box(boxes[i],Color.RED,correction);
+			redBox1 = boxes[i];
 		} else if (boxes[i].id() == 112) {
 			// Red 2
-			redBox2 = Box(boxes[i],Color.RED,correction);
+			redBox2 = boxes[i];
 		} else if (boxes[i].id() == 101) {
 			// Blue 1
-			blueBox1 = Box(boxes[i],Color.BLUE,correction);
+			blueBox1 = boxes[i];
 		} else if (boxes[i].id() == 103) {
 			// Blue 2
-			blueBox2 = Box(boxes[i],Color.BLUE,correction);
+			blueBox2 = boxes[i];
 		}
 	}
 	
+	if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
+		
+	} else {
+
+	}
+
+	PerspectiveCorrection correction(p1, p2);
+
     Matrix<double, 1, 3> origin= correction.correctPerspectiveMetric((double)p1(0,0),(double)p1(0,1));
     Matrix<double, 1, 3> upperRight= correction.correctPerspectiveMetric((double)p1(2,0),(double)p1(2,1));
     cout << "CORRECTION SANITY CHECK:" << endl << "Origin: [" << origin(0,0) << "," << origin(0,1) << "]" << endl << "URC: [" << upperRight(0,0) << "," << upperRight(0,1) << "]" << endl;
 
-    Entity botRed;
-    Entity botGreen;
-    Entity botBlue;
-
-    for (unsigned i = 0; i < data.robots.size(); i++){
-		if (data.robots[i].id() == RED_ID){
-            botRed = data.robots[i];
-            cout << "Found Red" << endl;
-		}
-		if (data.robots[i].id() == GREEN_ID){
-            botGreen = data.robots[i];
-            cout << "Found Green" << endl;
-		}
-        if (data.robots[i].id() == BLUE_ID){
-            botBlue = data.robots[i];
-            cout << "Found Blue" << endl;
-        }
+    Planner P;
+    P.SetGrid();
+    
+    Coordinate tStart=pair<float,float>(10,10);
+    Coordinate tGoal=pair<float,float>(110,110);
+    
+    TVecCoord tCenterBoxes;
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        tCenterBoxes.push_back(make_pair(boxes[i].x(),boxes[i].y()));
     }
 
-	Matrix<double, 1, 3> startPositionA= correction.correctPerspectiveMetric((double)botGreen.x(),(double)botGreen.y());
-	//Matrix<double, 1, 3> startPositionB= correction.correctPerspectiveMetric((double)bot1.x(),(double)bot1.y());
+    //tCenterBoxes.push_back(make_pair(50,50));
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
 
-	//vector<pair<Point2f,float>> waypoints;
-    vector<location> waypoints;
-    //waypoints.push_back(location{(float)startPositionA(0,0),(float)startPositionA(0,1),90});
-    //waypoints.push_back(location{(float)startPositionA(0,0),(float)startPositionA(0,1)+100,90});
-
-    //waypoints.push_back(location{0,0,30});
-    //waypoints.push_back(location{231,110,30});
-
-    waypoints.push_back(Location{50,50,0});
-    waypoints.push_back(Location{100,50,90});
-    waypoints.push_back(Location{100,100,180});
-    waypoints.push_back(Location{100,100,180});
-
-	//waypoints.push_back(make_pair(make_pair(startPositionA(0,0),startPositionA(0,1)),0));
-	//waypoints.push_back(make_pair(make_pair(startPositionA(0,0),startPositionA(0,1)+75),0));
-	//waypoints.push_back(make_pair(Point2f(startPositionA(0,1)+50,startPositionA(0,0)+50),180));
-	//waypoints.push_back(make_pair(Point2f(startPositionA(0,1)+50,startPositionA(0,0)),270));
-
-    //CubicBezier trajectoryA((float)startPositionA(0,0), (float)startPositionA(0,1), 0, (float)startPositionA(0,0), (float)startPositionA(0,1)+50, 0, 1);
-
-    //CubicBezier trajectoryB((float)startPositionB(0,0), (float)startPositionB(0,1), 0, (float)startPositionB(0,0), (float)startPositionB(0,1)+50, 0, 1);
-	//CubicBezier trajectory(Point2f(0,0),Point2f(0,50),Point2f(100,50),Point2f(100,100));
-
-	thread runBotGreen(FollowTrajectory, botGreen.id(), fc, correction, TrajectoryFromWaypointsAndHeadings(waypoints));
-
-    //thread robotTracker(TrackRobot, botGreen.id(), correction, fc);
-
-    cout << waypoints[0].x << '\t' << waypoints[0].y << endl;
-    cout << waypoints[1].x << '\t' << waypoints[1].y << endl;
-	runBotGreen.join();
-
-    //fc.closeGripper(0);
-
-    //Point2f last(0,0);
-    /*
-    vector<CubicBezier> bot0path, bot1path;
-    bot0path.push_back(trajectoryA);
-    bot1path.push_back(trajectoryB);
-
-    thread runBot0(FollowTrajectory, bot0.id(), fc, correction, bot0path);
-	thread runBot1(FollowTrajectory, bot1.id(), fc, correction, bot1path);
-	runBot0.join();
-	runBot1.join();
-	*/
-
-	//for(float i = 0.05; i <= 1; i += 0.05) {
-		//Point2f currentPoint = trajectory.GetPoint(i);
-		//cout << "X: " << currentPoint.x << " Y: " << currentPoint.y << endl;
+    TVecCoord tPath=P.AStarSearch(tStart,tGoal,tObstacles);
+    for (TVecCoord::iterator it=tPath.begin(); it!=tPath.end(); ++it) {
+        cout<<it->first<<'\t'<<it->second<<endl;
+    }
 
 
-		//Matrix<double,1,3> coordinateA = correction.correctPerspectivePixels(trajectoryA.GetPoint(i).x,trajectoryA.GetPoint(i).y);
-		//Matrix<double,1,3> coordinateB = correction.correctPerspectivePixels(trajectoryB.GetPoint(i).x,trajectoryB.GetPoint(i).y);
+//    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
+//    
 
-		//thread runBot0(SendToPoint, 0, (int)coordinateA(0,0),(int)coordinateA(0,1), fc);
-		//thread runBot1(SendToPoint, 5, (int)coordinateB(0,0),(int)coordinateB(0,1), fc);
-		//thread runBot0(FollowTrajectory, 0, fc, correction, bot0path);
-		//thread runBot1(FollowTrajectory, 0, fc, correction, bot1path);
-		//runBot0.join();
-		//runBot1.join();
-		/*
-		std::ostringstream command;
-		command << "./g2p 127.0.0.1 0 " << (int)coordinate(0,0) << " " << (int)coordinate(0,1);
-    	cout << command.str() << endl;
-    	const char *c = command.str().c_str();
-    	std::system(c);
-    	*/
-		//float delta = sqrt(pow(currentPoint.x - last.x,2) + pow(currentPoint.y - last.y,2));
-		//cout << "Delta: " << delta << endl;
-		//last = currentPoint;
-	//}
+//    TVecCoord G = P.GetGrid();
+//    for (TVecCoord::iterator it=G.begin(); it!=G.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
+
+
+/* Joe's code*/
+
+ //    Entity botRed;
+ //    Entity botGreen;
+ //    Entity botBlue;
+
+ //    for (unsigned i = 0; i < data.robots.size(); i++){
+	// 	if (data.robots[i].id() == RED_ID){
+ //            botRed = data.robots[i];
+ //            cout << "Found Red" << endl;
+	// 	}
+	// 	if (data.robots[i].id() == GREEN_ID){
+ //            botGreen = data.robots[i];
+ //            cout << "Found Green" << endl;
+	// 	}
+ //        if (data.robots[i].id() == BLUE_ID){
+ //            botBlue = data.robots[i];
+ //            cout << "Found Blue" << endl;
+ //        }
+ //    }
+
+	// Matrix<double, 1, 3> startPositionA= correction.correctPerspectiveMetric((double)botGreen.x(),(double)botGreen.y());
+	// //Matrix<double, 1, 3> startPositionB= correction.correctPerspectiveMetric((double)bot1.x(),(double)bot1.y());
+
+	// //vector<pair<Point2f,float>> waypoints;
+ //    vector<location> waypoints;
+ //    //waypoints.push_back(location{(float)startPositionA(0,0),(float)startPositionA(0,1),90});
+ //    //waypoints.push_back(location{(float)startPositionA(0,0),(float)startPositionA(0,1)+100,90});
+
+ //    //waypoints.push_back(location{0,0,30});
+ //    //waypoints.push_back(location{231,110,30});
+
+ //    waypoints.push_back(Location{50,50,0});
+ //    waypoints.push_back(Location{100,50,90});
+ //    waypoints.push_back(Location{100,100,180});
+ //    waypoints.push_back(Location{100,100,180});
+
+	// //waypoints.push_back(make_pair(make_pair(startPositionA(0,0),startPositionA(0,1)),0));
+	// //waypoints.push_back(make_pair(make_pair(startPositionA(0,0),startPositionA(0,1)+75),0));
+	// //waypoints.push_back(make_pair(Point2f(startPositionA(0,1)+50,startPositionA(0,0)+50),180));
+	// //waypoints.push_back(make_pair(Point2f(startPositionA(0,1)+50,startPositionA(0,0)),270));
+
+ //    //CubicBezier trajectoryA((float)startPositionA(0,0), (float)startPositionA(0,1), 0, (float)startPositionA(0,0), (float)startPositionA(0,1)+50, 0, 1);
+
+ //    //CubicBezier trajectoryB((float)startPositionB(0,0), (float)startPositionB(0,1), 0, (float)startPositionB(0,0), (float)startPositionB(0,1)+50, 0, 1);
+	// //CubicBezier trajectory(Point2f(0,0),Point2f(0,50),Point2f(100,50),Point2f(100,100));
+
+	// thread runBotGreen(FollowTrajectory, botGreen.id(), fc, correction, TrajectoryFromWaypointsAndHeadings(waypoints));
+
+ //    //thread robotTracker(TrackRobot, botGreen.id(), correction, fc);
+
+ //    cout << waypoints[0].x << '\t' << waypoints[0].y << endl;
+ //    cout << waypoints[1].x << '\t' << waypoints[1].y << endl;
+	// runBotGreen.join();
+
+ //    //fc.closeGripper(0);
+
+ //    //Point2f last(0,0);
+ //    /*
+ //    vector<CubicBezier> bot0path, bot1path;
+ //    bot0path.push_back(trajectoryA);
+ //    bot1path.push_back(trajectoryB);
+
+ //    thread runBot0(FollowTrajectory, bot0.id(), fc, correction, bot0path);
+	// thread runBot1(FollowTrajectory, bot1.id(), fc, correction, bot1path);
+	// runBot0.join();
+	// runBot1.join();
+	// */
+
+	// //for(float i = 0.05; i <= 1; i += 0.05) {
+	// 	//Point2f currentPoint = trajectory.GetPoint(i);
+	// 	//cout << "X: " << currentPoint.x << " Y: " << currentPoint.y << endl;
+
+
+	// 	//Matrix<double,1,3> coordinateA = correction.correctPerspectivePixels(trajectoryA.GetPoint(i).x,trajectoryA.GetPoint(i).y);
+	// 	//Matrix<double,1,3> coordinateB = correction.correctPerspectivePixels(trajectoryB.GetPoint(i).x,trajectoryB.GetPoint(i).y);
+
+	// 	//thread runBot0(SendToPoint, 0, (int)coordinateA(0,0),(int)coordinateA(0,1), fc);
+	// 	//thread runBot1(SendToPoint, 5, (int)coordinateB(0,0),(int)coordinateB(0,1), fc);
+	// 	//thread runBot0(FollowTrajectory, 0, fc, correction, bot0path);
+	// 	//thread runBot1(FollowTrajectory, 0, fc, correction, bot1path);
+	// 	//runBot0.join();
+	// 	//runBot1.join();
+	// 	/*
+	// 	std::ostringstream command;
+	// 	command << "./g2p 127.0.0.1 0 " << (int)coordinate(0,0) << " " << (int)coordinate(0,1);
+ //    	cout << command.str() << endl;
+ //    	const char *c = command.str().c_str();
+ //    	std::system(c);
+ //    	*/
+	// 	//float delta = sqrt(pow(currentPoint.x - last.x,2) + pow(currentPoint.y - last.y,2));
+	// 	//cout << "Delta: " << delta << endl;
+	// 	//last = currentPoint;
+	// //}
 	
-	//fc.openGripper(0);
-    /*
-    for (float t = 0; t <= 1; t+=0.01) {
-    	Point2f newPoint = path.GetPoint(t);
-    	cout << newPoint.x << '\t' << newPoint.y << endl;
-    }
-    */
+	// //fc.openGripper(0);
+ //    /*
+ //    for (float t = 0; t <= 1; t+=0.01) {
+ //    	Point2f newPoint = path.GetPoint(t);
+ //    	cout << newPoint.x << '\t' << newPoint.y << endl;
+ //    }
+ //    */
 
     return 0;
 }
