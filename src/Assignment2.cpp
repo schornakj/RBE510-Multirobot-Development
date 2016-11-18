@@ -47,16 +47,23 @@ private:
 // Need to reference the perspective correction to get the position of the box in cm
 	PerspectiveCorrection correction;
 public:
+    
+    /* Box variables */
 	Entity box;
 	Color boxColor;
 	State currentStatus;
-	
 	bool isHighPriority;
+	int xCm; //to be changed to float !
+	int yCm; //to be changed to float !
 	
+<<<<<<< HEAD
 	int xCm;
 	int yCm;
 	
 	
+=======
+    /* Constructor */
+>>>>>>> d1676f12ab059b75ab3808905f3207f592505492
 	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
 		this->box = inputBox;
 		this->boxColor = inputColor;
@@ -76,8 +83,40 @@ public:
 			isHighPriority = false;
 		}
 	}
+    
+    /* Update box state based on its position on the field.
+     Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
+     Boxes in the opposite color's zone are on the wrong side.
+     Boxes in the parking zone east of the red zone are parking (only low-priority (i.e. blue) boxes should end up here)
+     Boxes in the appropriate color zone and close to the north edge of the field are done being moved*/
+    
+    State updateBoxStatus() {
+        State output;
+        if (boxColor == Color.RED) {
+            if (xCm > fieldWidth/2) {
+                output = State.CORRECT_SIDE;
+                if (yCm > fieldHeight*0.75) {
+                    output = State.DONE;
+                }
+            } else {
+                output = State.WRONG_SIDE;
+            }
+        } else if (boxColor == Color.BLUE) {
+            if (xCm <= fieldWidth/2) {
+                output = State.CORRECT_SIDE;
+                if (yCm > fieldHeight*0.75) {
+                    output = State.DONE;
+                }
+            } else if (xCm >= fieldWidth*0.8) {
+                output = State.PARKING;
+            } else {
+                output = State.WRONG_SIDE;
+            }
+        }
+    }
+    
 	
-	// Get robot position and orientation needed to start pushing the box in the requested direction
+	/* Get robot position and orientation needed to start pushing the box in the requested direction */
 	Location getPushStartPosition(Direction pushDirection) {
 		Location output;
 		if (pushDirection == Direction.EAST) {
@@ -99,6 +138,7 @@ public:
 		}
 	}
 	
+<<<<<<< HEAD
 	// Update box state based on its position on the field.
 	// Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
 	// Boxes in the opposite color's zone are on the wrong side.
@@ -141,6 +181,9 @@ public:
 			}
 		}
 	}		
+=======
+	
+>>>>>>> d1676f12ab059b75ab3808905f3207f592505492
 }
 
 class PID {
@@ -281,6 +324,9 @@ void TrackRobot(int inputId, PerspectiveCorrection correction, FieldComputer fc)
 
 int main(int argc, char *argv[])
 {
+    
+    ////////////////////////// INITIALIZATION ///////////////////////////
+    
     string ip = "127.0.0.1";
     FieldComputer fc(ip);
     fc = FieldComputer(ip);
@@ -376,11 +422,14 @@ int main(int argc, char *argv[])
 		}
 	}
 	
+<<<<<<< HEAD
 	// if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
 		
 	// } else {
 
 	// }
+=======
+>>>>>>> d1676f12ab059b75ab3808905f3207f592505492
 
 	PerspectiveCorrection correction(p1, p2);
 
@@ -388,28 +437,60 @@ int main(int argc, char *argv[])
     Matrix<double, 1, 3> upperRight= correction.correctPerspectiveMetric((double)p1(2,0),(double)p1(2,1));
     cout << "CORRECTION SANITY CHECK:" << endl << "Origin: [" << origin(0,0) << "," << origin(0,1) << "]" << endl << "URC: [" << upperRight(0,0) << "," << upperRight(0,1) << "]" << endl;
 
+    
     Planner P;
+    ////////////////////////////////////////////////////
+
+    
     P.SetGrid();
+    
+    /* Get centers of the boxes in cm and put them in a TVecCoord */
+    TVecCoord tCenterBoxes;
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        Matrix<double, 1, 3> tCenterBoxesMetric= correction.correctPerspectiveMetric(boxes[i].x(),boxes[i].y()); // replace by .xCm and .yCm, once they are fixed (float type)
+        tCenterBoxes.push_back(make_pair(tCenterBoxesMetric(0,0),tCenterBoxesMetric(0,1)));
+    }
+
+    /* Map obstacles */
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
+    /* Main routine */
+    
+    /* Push blue (least priority) boxes which are in the red zone into the parking space*/
+    for (<#initialization#>; <#condition#>; <#increment#>) {
+        <#statements#>
+    }
+    /* Push red boxes which are in the blue zone to available position in the red zone*/
+    for (<#initialization#>; <#condition#>; <#increment#>) {
+        <#statements#>
+    }
+    /* Push red boxes in Y direction to get them to end position (done State)*/
+    for (<#initialization#>; <#condition#>; <#increment#>) {
+        <#statements#>
+    }
+    /* Push blue boxes from the parking space to available position in the blue zone */
+    for (<#initialization#>; <#condition#>; <#increment#>) {
+        <#statements#>
+    }
+    /* Push blue boxes in Y direction to get them to end position (done State)*/
+    for (<#initialization#>; <#condition#>; <#increment#>) {
+        <#statements#>
+    }
+    
+    /* Print outs for debugging */
     
     Coordinate tStart=pair<float,float>(10,10);
     Coordinate tGoal=pair<float,float>(110,110);
     
-    TVecCoord tCenterBoxes;
-    for (unsigned i = 0; i < boxes.size(); i++) {
-        Matrix<double, 1, 3> tCenterBoxesMetric= correction.correctPerspectiveMetric(boxes[i].x(),boxes[i].y());
-        tCenterBoxes.push_back(make_pair(tCenterBoxesMetric(0,0),tCenterBoxesMetric(0,1)));
-    }
-
-    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
-       cout<<it->first<<'\t'<<it->second<<endl;
-    }   
-    cout<<endl;
-
-    //tCenterBoxes.push_back(make_pair(50,50));
-    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
-    
-
     TVecCoord tPath=P.AStarSearch(tStart,tGoal,tObstacles);
+    
+    cout<<
+    
+    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+        cout<<it->first<<'\t'<<it->second<<endl;
+    }
+    cout<<endl;
+    
     for (TVecCoord::iterator it=tPath.begin(); it!=tPath.end(); ++it) {
         cout<<it->first<<'\t'<<it->second<<endl;
     }
@@ -418,13 +499,8 @@ int main(int argc, char *argv[])
 
    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
        cout<<it->first<<'\t'<<it->second<<endl;
-   }
+    }
    
-
-//    TVecCoord G = P.GetGrid();
-//    for (TVecCoord::iterator it=G.begin(); it!=G.end(); ++it) {
-//        cout<<it->first<<'\t'<<it->second<<endl;
-//    }
 
 
 /* Joe's code*/
