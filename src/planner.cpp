@@ -200,11 +200,11 @@ TVecCoord Planner::MapObstacles(TVecCoord t_centerBoxes){
         fYMax=fCenterY+fRadius;
         fYMin=fCenterY-fRadius;
         
-        tMin=make_pair(fXMin,fYMin);
-        tMax=make_pair(fXMax,fYMax);
+        //tMin=make_pair(fXMin,fYMin);
+        //tMax=make_pair(fXMax,fYMax);
         
         for (TVecCoord::iterator it1=m_tGrid.begin(); it1!=m_tGrid.end(); ++it1) {
-            if ( (*it1 < tMax) && (*it1 >tMin) ) {
+            if ( (it1->first<fXMax) && (it1->second<fYMax) && (it1->first>fXMin) && (it1->second>fYMin) ) {
                 tObstacles.push_back(*it1);
             }
         }
