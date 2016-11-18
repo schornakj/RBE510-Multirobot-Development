@@ -39,7 +39,8 @@ enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // West = X-negative
 // South = Y-negative (shouldn't ever have to push south)
 enum Direction {EAST, NORTH, WEST, SOUTH};
-enum Color{RED, BLUE, GREEN};
+enum Color {RED, BLUE, GREEN};
+enum Position {RedRight, RedLeft, BlueRight BlueLeft, };
 
 class Box {
 private:
@@ -54,6 +55,7 @@ public:
 	
 	int xCm;
 	int yCm;
+	
 	
 	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
 		this->box = inputBox;
@@ -104,18 +106,31 @@ public:
 	// Boxes in the appropriate color zone and close to the north edge of the field are done being moved
 	State updateBoxStatus() {
 		State output;
+		Position p_output;
 		if (boxColor == Color.RED) {
 			if (xCm > fieldWidth/2) {
 				output = State.CORRECT_SIDE;
-				if (yCm > fieldHeight*0.75) {
+				if (yCm <f ieldHeight*0.25){
+					p_output=Position.RedLeft;
+				}
+				else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
+					p_output=Position.RedRight;
+				}
+				else {
 					output = State.DONE;
 				}
-			} else {
+			}
+			else {
 				output = State.WRONG_SIDE;
 			}
 		} else if (boxColor == Color.BLUE) {
 			if (xCm <= fieldWidth/2) {
 				output = State.CORRECT_SIDE;
+				if(yCm < fieldHeight*0.25){
+					p_output=Position.BlueLeft;
+				}
+				else if (yCm>)
+
 				if (yCm > fieldHeight*0.75) {
 					output = State.DONE;
 				}
@@ -361,11 +376,11 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
+	// if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
 		
-	} else {
+	// } else {
 
-	}
+	// }
 
 	PerspectiveCorrection correction(p1, p2);
 
