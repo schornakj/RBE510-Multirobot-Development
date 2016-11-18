@@ -48,10 +48,10 @@ RM = /usr/local/Cellar/cmake/3.6.2/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing
+CMAKE_SOURCE_DIR = /Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing
+CMAKE_BINARY_DIR = /Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/CMakeFiles /Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development/CMakeFiles /Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -150,6 +150,33 @@ src/Assignment2.cpp.s:
 	$(MAKE) -f CMakeFiles/Assignment2.dir/build.make CMakeFiles/Assignment2.dir/src/Assignment2.cpp.s
 .PHONY : src/Assignment2.cpp.s
 
+src/planner.o: src/planner.cpp.o
+
+.PHONY : src/planner.o
+
+# target to build an object file
+src/planner.cpp.o:
+	$(MAKE) -f CMakeFiles/Assignment2.dir/build.make CMakeFiles/Assignment2.dir/src/planner.cpp.o
+.PHONY : src/planner.cpp.o
+
+src/planner.i: src/planner.cpp.i
+
+.PHONY : src/planner.i
+
+# target to preprocess a source file
+src/planner.cpp.i:
+	$(MAKE) -f CMakeFiles/Assignment2.dir/build.make CMakeFiles/Assignment2.dir/src/planner.cpp.i
+.PHONY : src/planner.cpp.i
+
+src/planner.s: src/planner.cpp.s
+
+.PHONY : src/planner.s
+
+# target to generate assembly for a file
+src/planner.cpp.s:
+	$(MAKE) -f CMakeFiles/Assignment2.dir/build.make CMakeFiles/Assignment2.dir/src/planner.cpp.s
+.PHONY : src/planner.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,6 +189,9 @@ help:
 	@echo "... src/Assignment2.o"
 	@echo "... src/Assignment2.i"
 	@echo "... src/Assignment2.s"
+	@echo "... src/planner.o"
+	@echo "... src/planner.i"
+	@echo "... src/planner.s"
 .PHONY : help
 
 

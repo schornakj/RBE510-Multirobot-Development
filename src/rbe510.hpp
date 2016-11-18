@@ -360,10 +360,10 @@ int NetUtil::getServerSocket(){
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(PORT);
-	if(bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
-		std::cout << "Error could not bind\n";
-		return -1;
-	}
+	// if(bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+	// 	std::cout << "Error could not bind\n";
+	// 	return -1;
+	// }
 	listen(listenfd, 10);
 	return listenfd;
 }

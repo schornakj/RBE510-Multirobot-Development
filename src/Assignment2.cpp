@@ -381,8 +381,14 @@ int main(int argc, char *argv[])
     
     TVecCoord tCenterBoxes;
     for (unsigned i = 0; i < boxes.size(); i++) {
-        tCenterBoxes.push_back(make_pair(boxes[i].x(),boxes[i].y()));
+        Matrix<double, 1, 3> tCenterBoxesMetric= correction.correctPerspectiveMetric(boxes[i].x(),boxes[i].y());
+        tCenterBoxes.push_back(make_pair(tCenterBoxesMetric(0,0),tCenterBoxesMetric(0,1)));
     }
+
+    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+       cout<<it->first<<'\t'<<it->second<<endl;
+    }   
+    cout<<endl;
 
     //tCenterBoxes.push_back(make_pair(50,50));
     TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
@@ -392,12 +398,13 @@ int main(int argc, char *argv[])
     for (TVecCoord::iterator it=tPath.begin(); it!=tPath.end(); ++it) {
         cout<<it->first<<'\t'<<it->second<<endl;
     }
+    cout<<endl;
 
 
-//    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
-//        cout<<it->first<<'\t'<<it->second<<endl;
-//    }
-//    
+   for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
+       cout<<it->first<<'\t'<<it->second<<endl;
+   }
+   
 
 //    TVecCoord G = P.GetGrid();
 //    for (TVecCoord::iterator it=G.begin(); it!=G.end(); ++it) {

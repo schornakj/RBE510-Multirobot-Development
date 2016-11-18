@@ -6,5 +6,5 @@ CXX_FLAGS =  -std=c++11
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/src -isystem /usr/local/include -isystem /usr/local/include/opencv 
+CXX_INCLUDES = -I/Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development/src -isystem /usr/local/include -isystem /usr/local/include/opencv 
 

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing
+# Install script for directory: /Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -35,5 +35,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/multirobot/Desktop/jgschornak/Multi_Robotics_F2016-transform_testing/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/multirobot/Desktop/Team_3/RBE510-Multirobot-Development/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
