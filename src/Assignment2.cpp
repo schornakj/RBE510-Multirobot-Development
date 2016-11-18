@@ -25,6 +25,20 @@ using namespace cv;
 #define GREEN_ID 0
 #define BLUE_ID 5
 
+#define BOX_OFFSET 10
+
+// Width and height of rectangle marked by corner codes in cm
+double fieldWidth = 231.14;
+double fieldHeight = 109.86;
+
+enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
+// East = X-positive
+// North = Y-positive
+// West = X-negative
+// South = Y-negative (shouldn't ever have to push south)
+enum Direction {EAST, NORTH, WEST, SOUTH};
+enum Color{RED, BLUE, GREEN};
+
 /*
 struct location {
     float x;
@@ -32,6 +46,93 @@ struct location {
     float orientation;
 };
 */
+
+class Box {
+private:
+// Need to reference the perspective correction to get the position of the box in cm
+	PerspectiveCorrection correction;
+public:
+	Entity box;
+	Color boxColor;
+	State currentStatus;
+	
+	bool isHighPriority;
+	
+	int xCm;
+	int yCm;
+	
+	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
+		this->box = inputBox;
+		this->boxColor = inputColor;
+		this->correction = inputCorrection;
+		
+		// Perform perspecitve correction to get metric position
+		Matrix<double, 1, 3> position= correction.correctPerspectiveMetric(box.x(),box.y());
+		
+		this->xCm = position(0,0);
+		this->yCm = position(0,1);
+		
+		// Update box position based on field zone rules
+		this->currentStatus = updateBoxStatus();
+		if (boxColor == Color.RED) {
+			isHighPriority = true;
+		} else {
+			isHighPriority = false;
+		}
+	}
+	
+	// Get robot position and orientation needed to start pushing the box in the requested direction
+	Location getPushStartPosition(Direction pushDirection) {
+		Location output;
+		if (pushDirection == Direction.EAST) {
+			output.Orientation = 0;
+			output.y = yCm;
+			output.x = xCm - BOX_OFFSET;
+		} else if (pushDirection == Direction.NORTH) {
+			output.Orientation = 90;
+			output.x = xCm;
+			output.y = yCm - BOX_OFFSET;
+		} else if (pushDirection == Direction.WEST) {
+			output.Orientation = 180;
+			output.y = yCm;
+			output.x = xCm + BOX_OFFSET;
+		} else if (pushDirection == Direction.SOUTH) {
+			output.Orientation = 270;
+			output.x = xCm;
+			output.y = yCm + BOX_OFFSET;
+		}
+	}
+	
+	// Update box state based on its position on the field.
+	// Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
+	// Boxes in the opposite color's zone are on the wrong side.
+	// Boxes in the parking zone east of the red zone are parking (only low-priority (i.e. blue) boxes should end up here)
+	// Boxes in the appropriate color zone and close to the north edge of the field are done being moved
+	State updateBoxStatus() {
+		State output;
+		if (boxColor == Color.RED) {
+			if (xCm > fieldWidth/2) {
+				output = State.CORRECT_SIDE;
+				if (yCm > fieldHeight*0.75) {
+					output = State.DONE;
+				}
+			} else {
+				output = State.WRONG_SIDE;
+			}
+		} else if (boxColor == Color.BLUE) {
+			if (xCm <= fieldWidth/2) {
+				output = State.CORRECT_SIDE;
+				if (yCm > fieldHeight*0.75) {
+					output = State.DONE;
+				}
+			} else if (xCm >= fieldWidth*0.8) {
+				output = State.PARKING;
+			} else {
+				output = State.WRONG_SIDE;
+			}
+		}
+	}		
+}
 
 class PID {
 public:
@@ -177,8 +278,7 @@ int main(int argc, char *argv[])
     fc.disableVerbose();
     FieldData data = fc.getFieldData();
 
-    double fieldWidth = 231.14;
-	double fieldHeight = 109.86;
+
 
 	Eigen::Matrix<double, 4, 2> p1;
 	Eigen::Matrix<double, 4, 2> p2;
@@ -187,11 +287,15 @@ int main(int argc, char *argv[])
 	vector<Entity> corners;
 	vector<Entity> boxes;
 	
-	Entity redBox1;
-	Entity redBox2;
-	Entity blueBox1;
-	Entity blueBox2;
+	//Entity redBox1;
+	//Entity redBox2;
+	//Entity blueBox1;
+	//Entity blueBox2;
 	
+	Box redBox1;
+	Box redBox2;
+	Box blueBox1;
+	Box blueBox2;
 	
 	Location boxStartPos0{0,0,0};
 	Location boxStartPos1{0,0,0};
@@ -250,30 +354,24 @@ int main(int argc, char *argv[])
 		}
 	}
 	
+	PerspectiveCorrection correction(p1, p2);
+	
 	for (unsigned i = 0; i < boxes.size(); i++) {
 		if (boxes[i].id() == 102) {
 			// Red 1
-			redBox1 = boxes[i];
+			redBox1 = Box(boxes[i],Color.RED,correction);
 		} else if (boxes[i].id() == 112) {
 			// Red 2
-			redBox2 = boxes[i];
+			redBox2 = Box(boxes[i],Color.RED,correction);
 		} else if (boxes[i].id() == 101) {
 			// Blue 1
-			blueBox1 = boxes[i];
+			blueBox1 = Box(boxes[i],Color.BLUE,correction);
 		} else if (boxes[i].id() == 103) {
 			// Blue 2
-			blueBox2 = boxes[i];
+			blueBox2 = Box(boxes[i],Color.BLUE,correction);
 		}
 	}
 	
-	if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
-		
-	} else {
-
-	}
-
-	PerspectiveCorrection correction(p1, p2);
-
     Matrix<double, 1, 3> origin= correction.correctPerspectiveMetric((double)p1(0,0),(double)p1(0,1));
     Matrix<double, 1, 3> upperRight= correction.correctPerspectiveMetric((double)p1(2,0),(double)p1(2,1));
     cout << "CORRECTION SANITY CHECK:" << endl << "Origin: [" << origin(0,0) << "," << origin(0,1) << "]" << endl << "URC: [" << upperRight(0,0) << "," << upperRight(0,1) << "]" << endl;
