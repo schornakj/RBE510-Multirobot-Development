@@ -39,7 +39,8 @@ enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // West = X-negative
 // South = Y-negative (shouldn't ever have to push south)
 enum Direction {EAST, NORTH, WEST, SOUTH};
-enum Color{RED, BLUE, GREEN};
+enum Color {RED, BLUE, GREEN};
+enum Position {RedRight, RedLeft, BlueRight BlueLeft, };
 
 class Box {
 private:
@@ -55,7 +56,10 @@ public:
 	int xCm; //to be changed to float !
 	int yCm; //to be changed to float !
 	
+
+
     /* Constructor */
+
 	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
 		this->box = inputBox;
 		this->boxColor = inputColor;
@@ -130,7 +134,50 @@ public:
 		}
 	}
 	
-	
+
+	// Update box state based on its position on the field.
+	// Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
+	// Boxes in the opposite color's zone are on the wrong side.
+	// Boxes in the parking zone east of the red zone are parking (only low-priority (i.e. blue) boxes should end up here)
+	// Boxes in the appropriate color zone and close to the north edge of the field are done being moved
+	State updateBoxStatus() {
+		State output;
+		Position p_output;
+		if (boxColor == Color.RED) {
+			if (xCm > fieldWidth/2) {
+				output = State.CORRECT_SIDE;
+				if (yCm <f ieldHeight*0.25){
+					p_output=Position.RedLeft;
+				}
+				else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
+					p_output=Position.RedRight;
+				}
+				else {
+					output = State.DONE;
+				}
+			}
+			else {
+				output = State.WRONG_SIDE;
+			}
+		} else if (boxColor == Color.BLUE) {
+			if (xCm <= fieldWidth/2) {
+				output = State.CORRECT_SIDE;
+				if(yCm < fieldHeight*0.25){
+					p_output=Position.BlueLeft;
+				}
+				else if (yCm>)
+
+				if (yCm > fieldHeight*0.75) {
+					output = State.DONE;
+				}
+			} else if (xCm >= fieldWidth*0.8) {
+				output = State.PARKING;
+			} else {
+				output = State.WRONG_SIDE;
+			}
+		}
+	}		
+
 }
 
 class PID {
@@ -369,6 +416,13 @@ int main(int argc, char *argv[])
 		}
 	}
 	
+
+	// if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
+		
+	// } else {
+
+	// }
+
 
 	PerspectiveCorrection correction(p1, p2);
 
