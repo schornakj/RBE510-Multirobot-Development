@@ -73,15 +73,50 @@ TVecCoord Planner::CircleArc(Coordinate t_start, Coordinate t_goal, double n_Rad
 
 void Planner::SetGrid()
 {
-    m_nNumberStepsX=ceil(ArenaWidth/MaxSubdiv);
-    m_fStepX=ArenaWidth/m_nNumberStepsX;
-    m_nNumberStepsY=ceil(ArenaDepth/MaxSubdiv);
-    m_fStepY=ArenaDepth/m_nNumberStepsY;
-    for (int i=0; i<m_nNumberStepsX; ++i) {
-        for (int j=0; j<m_nNumberStepsY; ++j) {
-            m_tGrid.push_back(make_pair(i*m_fStepX,j*m_fStepY));
+    float nNumberStepsX=ceil(ArenaWidth/MaxSubdiv);
+    m_fStep=ArenaWidth/nNumberStepsX;
+    float nNumberStepsY=floor(ArenaDepth/MaxSubdiv);
+    
+    for (int i=0; i<nNumberStepsX; ++i) {
+        for (int j=0; j<nNumberStepsY; ++j) {
+            m_tGrid.push_back(make_pair(i*m_fStep,j*m_fStep));
         }
     }
+}
+
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+
+TVecCoord Planner::MapObstacles(TVecCoord t_centerBoxes){
+    
+    TVecCoord tObstacles;
+    float fCenterX;
+    float fCenterY;
+    float fXMax;
+    float fXMin;
+    float fYMax;
+    float fYMin;
+    Coordinate tMin;
+    Coordinate tMax;
+    
+    float fRadius=sqrt(2)/2*BoxSize; //circumsquare of box
+    
+    for (TVecCoord::iterator it=t_centerBoxes.begin(); it!=t_centerBoxes.end(); ++it) {
+        fCenterX=it->first;
+        fCenterY=it->second;
+        
+        fXMax=fCenterX+fRadius;
+        fXMin=fCenterX-fRadius;
+        fYMax=fCenterY+fRadius;
+        fYMin=fCenterY-fRadius;
+        
+        for (TVecCoord::iterator it1=m_tGrid.begin(); it1!=m_tGrid.end(); ++it1) {
+            if ( (it1->first<fXMax) && (it1->second<fYMax) && (it1->first>fXMin) && (it1->second>fYMin) ) {
+                tObstacles.push_back(*it1);
+            }
+        }
+    }
+    return tObstacles;
 }
 
 /////////////////////////////////////////////////
@@ -116,12 +151,12 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
         
         tOpen.erase(it);
         
-        for (int i=-1; i<2; ++i) {
-            for (int j=-1; j<2; ++j) {
-                if (j!=0) {
-                    float fTempX=tCurrent.X+i*m_fStepX;
-                    float fTempY=tCurrent.Y+j*m_fStepY;
-                    if (fTempX>0 && fTempY>0) {
+        for (int i=-1; i<2; i++) {
+            for (int j=-1; j<2; j++) {
+                if (!(j==0 && i==0)) {
+                    float fTempX=tCurrent.X+i*m_fStep;
+                    float fTempY=tCurrent.Y+j*m_fStep;
+                    if (fTempX>0 && fTempY>0 && fTempX<ArenaWidth && fTempY<ArenaDepth) {
                         TVecCoord::iterator it4=find_if(t_obstacles.begin(),t_obstacles.end(),CompareXandYCoord(fTempX,fTempY));
                         if (it4==t_obstacles.end()) {
                             Node tTemp;
@@ -141,9 +176,10 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
             float fNeighborX=it1->X;
             float fNeighborY=it1->Y;
             float fNeighborCost=it1->f;
-            if ((abs(fNeighborX-fXGoal)<m_fStepX/2) && (abs(fNeighborY-fYGoal)<m_fStepY/2)) {
+            if ((abs(fNeighborX-fXGoal)<m_fStep/2) && (abs(fNeighborY-fYGoal)<m_fStep/2)) {
                 bGoalReached=true;
-                //tClosed.push_back(*it1);
+                tClosed.push_back(tCurrent);
+                tClosed.push_back(*it1);
                 break;
             }
             else
@@ -164,7 +200,9 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
                 }
             }
         }
-        tClosed.push_back(tCurrent);
+        if (!bGoalReached) {
+            tClosed.push_back(tCurrent);
+        }
     }
     
     for (TVecNode::iterator it=tClosed.begin(); it!=tClosed.end(); ++it) {
@@ -177,39 +215,22 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 
-TVecCoord Planner::MapObstacles(TVecCoord t_centerBoxes){
+TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){
     
-    TVecCoord tObstacles;
-    float fCenterX;
-    float fCenterY;
-    float fXMax;
-    float fXMin;
-    float fYMax;
-    float fYMin;
-    Coordinate tMin;
-    Coordinate tMax;
+    TVecCoord tPath;
+    float fPrevSlope=0;
+    float fCurrSlope;
     
-    float fRadius=sqrt(2)/2*BoxSize; //circumsquare of box
-    
-    for (TVecCoord::iterator it=t_centerBoxes.begin(); it!=t_centerBoxes.end(); ++it) {
-        fCenterX=it->first;
-        fCenterY=it->second;
-        
-        fXMax=fCenterX+fRadius;
-        fXMin=fCenterX-fRadius;
-        fYMax=fCenterY+fRadius;
-        fYMin=fCenterY-fRadius;
-        
-        //tMin=make_pair(fXMin,fYMin);
-        //tMax=make_pair(fXMax,fYMax);
-        
-        for (TVecCoord::iterator it1=m_tGrid.begin(); it1!=m_tGrid.end(); ++it1) {
-            if ( (it1->first<fXMax) && (it1->second<fYMax) && (it1->first>fXMin) && (it1->second>fYMin) ) {
-                tObstacles.push_back(*it1);
-            }
+    for (int i=1; i<t_AStarPath.size(); ++i) {
+        fCurrSlope=(t_AStarPath[i-1].second-t_AStarPath[i].second)/(t_AStarPath[i-1].first-t_AStarPath[i].first);
+        if (fCurrSlope!=fPrevSlope) {
+            tPath.push_back(make_pair(t_AStarPath[i-1].first,t_AStarPath[i-1].second));
         }
+        fPrevSlope=fCurrSlope;
     }
-    return tObstacles;
+    tPath.push_back(make_pair(t_AStarPath.back().first,t_AStarPath.back().second));
+    
+    return tPath;
 }
 
 /////////////////////////////////////////////////
