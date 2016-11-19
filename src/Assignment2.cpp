@@ -33,6 +33,9 @@ using namespace cv;
 double fieldWidth = 231.14;
 double fieldHeight = 109.86;
 
+//  Dimension of box/entity
+float boxdim = 7.63;
+
 enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // East = X-positive
 // North = Y-positive
@@ -40,7 +43,9 @@ enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // South = Y-negative (shouldn't ever have to push south)
 enum Direction {EAST, NORTH, WEST, SOUTH};
 enum Color {RED, BLUE, GREEN};
-enum Position {RedRight, RedLeft, BlueRight BlueLeft, };
+enum Position {RedRight, RedRightfin, RedLeft, RedLeftfin, BlueRight, BlueRightfin, BlueLeft, BlueLeftfin};
+/* Discretizing possible positions of boxes/entities based on whether it is in the red/blue zone, in the left/right 
+of its zone (only two possible choices), and if it is in the left/right of the end regions (four choices) */
 
 class Box {
 private:
@@ -143,41 +148,59 @@ public:
 	State updateBoxStatus() {
 		State output;
 		Position p_output;
-		if (boxColor == Color.RED) {
-			if (xCm > fieldWidth/2) {
-				output = State.CORRECT_SIDE;
-				if (yCm <f ieldHeight*0.25){
-					p_output=Position.RedLeft;
-				}
-				else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
-					p_output=Position.RedRight;
+
+		if (xCm >0.8* fieldWidth){
+			output = State.PARKING;
+		}
+		else{
+			if (boxColor == Color.RED) {
+				if (xCm >= fieldWidth/2 ) {
+					output = State.CORRECT_SIDE;
+					if (yCm < fieldHeight*0.25){
+						p_output=Position.RedRight;
+					}
+					else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
+						p_output=Position.RedLeft;
+					}
+					else if (yCm>fieldHeight*0.75) {
+						output = State.DONE;
+						if (xCm < (0.5*fieldWidth)+boxdim){
+							p_output=Position.RedRightfin;
+						}
+						else{
+							p_output=Position.RedLeftfin;
+						}
+					}	
 				}
 				else {
-					output = State.DONE;
+					output = State.WRONG_SIDE;
 				}
 			}
+				
+		 	else if (boxColor == Color.BLUE) {
+				if (xCm < fieldWidth/2 ) {
+					output = State.CORRECT_SIDE;
+					if (yCm < fieldHeight*0.25){
+						p_output=Position.BlueRight;
+					}
+					else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
+						p_output=Position.BlueLeft;
+					}
+					else if (yCm>fieldHeight*0.75) {
+						output = State.DONE;
+						if (xCm >= (0.5*fieldWidth)-boxdim){
+							p_output=Position.BlueLeftfin;
+						}
+						else{
+							p_output=Position.BlueRightfin;
+						}
+					}	
+				}
 			else {
-				output = State.WRONG_SIDE;
-			}
-		} else if (boxColor == Color.BLUE) {
-			if (xCm <= fieldWidth/2) {
-				output = State.CORRECT_SIDE;
-				if(yCm < fieldHeight*0.25){
-					p_output=Position.BlueLeft;
+					output = State.WRONG_SIDE;
 				}
-				else if (yCm>)
-
-				if (yCm > fieldHeight*0.75) {
-					output = State.DONE;
-				}
-			} else if (xCm >= fieldWidth*0.8) {
-				output = State.PARKING;
-			} else {
-				output = State.WRONG_SIDE;
 			}
 		}
-	}		
-
 }
 
 class PID {
