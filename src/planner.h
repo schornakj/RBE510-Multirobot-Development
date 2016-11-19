@@ -18,6 +18,7 @@ const float Epsilon=0.001;
 
 struct Location {
     float X,Y,Orientation;
+    Location(float X,float Y, float Orientation): X(X), Y(Y), Orientation(Orientation) {}
 };
 
 struct Node {
