@@ -47,46 +47,70 @@ enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // South = Y-negative (shouldn't ever have to push south)
 enum Direction {EAST, NORTH, WEST, SOUTH};
 enum Color {RED, BLUE, GREEN};
-enum Position {RED_RIGHT, RED_RIGHT_FIN, RED_LEFT, RED_LEFT_FIN, BLUE_RIGHT, BLUE_RIGHT_FIN, BLUE_LEFT, BLUE_LEFT_FIN};
+enum Position {RED_RIGHT, RED_RIGHT_END, RED_LEFT, RED_LEFT_END, BLUE_RIGHT, BLUE_RIGHT_END, BLUE_LEFT, BLUE_LEFT_END};
 
-/* Discretizing possible positions of boxes/entities based on whether it is in the red/blue zone, in the left/right 
-of its zone (only two possible choices), and if it is in the left/right of the end regions (four choices) */
+/* */
+class Bot{
+private :
+    PerspectiveCorrection correction;
+public:
+    Entity m_tBot;
+    Color m_tBotColor;
+    float m_fXCm;
+    float m_fYCm;
+    
+    Bot(Entity t_Bot, Color t_Color, PerspectiveCorrection t_Correction){
+        this->m_tBot = t_Bot;
+        this->m_tBotColor = t_Color;
+        this->m_tCorrection = t_Correction;
+        
+        // Perform perspecitve correction to get metric position
+        Matrix<double, 1, 3> position= t_Correction.correctPerspectiveMetric(t_Bot.x(),t_Bot.y());
+        
+        this->m_fXCm = position(0,0);
+        this->m_fYCm = position(0,1);
+    }
+
+};
+
+/* Discretizing boxes*/
 class Box {
+    
 private:
-// Need to reference the perspective correction to get the position of the box in cm
-	PerspectiveCorrection correction;
+    /* Variable to reference the perspective correction to get the position of the box in cm */
+    PerspectiveCorrection correction;
 public:
     
     /* Box variables */
-	Entity box;
-	Color boxColor;
-	State currentStatus;
-    Position currentPosition;
-	bool isHighPriority; //could be removed since our code is not general enough to switch
-	float xCm;
-	float yCm;
-
+    Entity box;
+    Color boxColor;
+    State currentStatus; // box in right/wrong color zone or parking space or in end zone (four choices)
+    Position currentPosition; // box in the left/right and red/blue zone or left/right and red/blue end zone (eight choices)
+    bool isHighPriority; //could be removed since our code is not general enough to switch
+    float xCm;
+    float yCm;
+    
     /* Constructor */
-
-	Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
-		this->box = inputBox;
-		this->boxColor = inputColor;
-		this->correction = inputCorrection;
-		
-		// Perform perspecitve correction to get metric position
-		Matrix<double, 1, 3> position= correction.correctPerspectiveMetric(box.x(),box.y());
-		
-		this->xCm = position(0,0);
-		this->yCm = position(0,1);
-		
-		// Update box position based on field zone rules
-		this->currentStatus = updateBoxStatus();
-		if (boxColor == Color.RED) {
-			isHighPriority = true;
-		} else {
-			isHighPriority = false;
-		}
-	}
+    
+    Box(Entity inputBox, Color inputColor, PerspectiveCorrection inputCorrection){
+        this->box = inputBox;
+        this->boxColor = inputColor;
+        this->correction = inputCorrection;
+        
+        // Perform perspecitve correction to get metric position
+        Matrix<double, 1, 3> position= correction.correctPerspectiveMetric(box.x(),box.y());
+        
+        this->xCm = position(0,0);
+        this->yCm = position(0,1);
+        
+        // Update box position based on field zone rules
+        this->currentStatus = updateBoxStatus();
+        if (boxColor == Color.RED) {
+            isHighPriority = true;
+        } else {
+            isHighPriority = false;
+        }
+    }
     
     /* Update box state based on its position on the field.
      Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
@@ -119,31 +143,31 @@ public:
         }
         currentStatus=output;
     }
-	
-	/* Get robot position and orientation needed to start pushing the box in the requested direction */
-	Location getPushStartPosition(Direction pushDirection) {
-		Location output;
-		if (pushDirection == Direction.EAST) {
-			output.Orientation = 0;
-			output.y = yCm;
-			output.x = xCm - BOX_OFFSET;
-		} else if (pushDirection == Direction.NORTH) {
-			output.Orientation = 90;
-			output.x = xCm;
-			output.y = yCm - BOX_OFFSET;
-		} else if (pushDirection == Direction.WEST) {
-			output.Orientation = 180;
-			output.y = yCm;
-			output.x = xCm + BOX_OFFSET;
-		} else if (pushDirection == Direction.SOUTH) {
-			output.Orientation = 270;
-			output.x = xCm;
-			output.y = yCm + BOX_OFFSET;
-		}
+    
+    /* Get robot position and orientation needed to start pushing the box in the requested direction */
+    Location getPushStartPosition(Direction pushDirection) {
+        Location output;
+        if (pushDirection == Direction.EAST) {
+            output.Orientation = 0;
+            output.y = yCm;
+            output.x = xCm - BOX_OFFSET;
+        } else if (pushDirection == Direction.NORTH) {
+            output.Orientation = 90;
+            output.x = xCm;
+            output.y = yCm - BOX_OFFSET;
+        } else if (pushDirection == Direction.WEST) {
+            output.Orientation = 180;
+            output.y = yCm;
+            output.x = xCm + BOX_OFFSET;
+        } else if (pushDirection == Direction.SOUTH) {
+            output.Orientation = 270;
+            output.x = xCm;
+            output.y = yCm + BOX_OFFSET;
+        }
         return output;
-	}
-	
-
+    }
+    
+    
     void getdiscreteposition(){
         Position p_output;
         if (boxColor == Color.RED && ) {
@@ -168,7 +192,7 @@ public:
             }
         }
     }
-}
+};
 
 class PID {
 public:
@@ -328,6 +352,8 @@ int main(int argc, char *argv[])
 	vector<Entity> boxes;
 
     vector<Box> vecBoxes;
+    vector<Bot> vecBots;
+    
 ///////// To be removed /////////
     
 //	Box redBox1;
@@ -361,6 +387,7 @@ int main(int argc, char *argv[])
 			if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
 				boxes.push_back(data.entities[i]);
 			}
+            
 		}
 		if (corners.size() < 4 || boxes.size() < 4){
 			corners.clear();
@@ -395,6 +422,12 @@ int main(int argc, char *argv[])
 		}
 	}
     
+    PerspectiveCorrection correction(p1, p2);
+    
+    Matrix<double, 1, 3> origin= correction.correctPerspectiveMetric((double)p1(0,0),(double)p1(0,1));
+    Matrix<double, 1, 3> upperRight= correction.correctPerspectiveMetric((double)p1(2,0),(double)p1(2,1));
+    cout << "CORRECTION SANITY CHECK:" << endl << "Origin: [" << origin(0,0) << "," << origin(0,1) << "]" << endl << "URC: [" << upperRight(0,0) << "," << upperRight(0,1) << "]" << endl;
+    
     for (unsigned i = 0; i < boxes.size(); i++) {
         if (boxes[i].id() == 102) {
             // Red 1
@@ -410,14 +443,21 @@ int main(int argc, char *argv[])
             vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
         }
     }
-	
-
-	PerspectiveCorrection correction(p1, p2);
-
-    Matrix<double, 1, 3> origin= correction.correctPerspectiveMetric((double)p1(0,0),(double)p1(0,1));
-    Matrix<double, 1, 3> upperRight= correction.correctPerspectiveMetric((double)p1(2,0),(double)p1(2,1));
-    cout << "CORRECTION SANITY CHECK:" << endl << "Origin: [" << origin(0,0) << "," << origin(0,1) << "]" << endl << "URC: [" << upperRight(0,0) << "," << upperRight(0,1) << "]" << endl;
-
+    
+    for (unsigned i = 0; i < data.robots.size(); i++){
+        if (data.robots[i].id() == RED_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            cout << "Found Red" << endl;
+        }
+        else if (data.robots[i].id() == GREEN_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            cout << "Found Green" << endl;
+        }
+        else if (data.robots[i].id() == BLUE_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            cout << "Found Blue" << endl;
+        }
+    }
     
     Planner P;
     ////////////////////////////////////////////////////
@@ -436,19 +476,32 @@ int main(int argc, char *argv[])
     /* Map obstacles */
     TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
     
-    
     /* Push blue (least priority) boxes which are in the red zone into the parking space*/
     for (unsigned i = 0; i < vecBoxes.size(); i++) {
         
         if (!vecBoxes[i].isHighPriority && vecBoxes[i].currentStatus==State.WRONG_SIDE) {
             
             /* Move blue robot from its initial position to blue box */
-            Location tPushPosition=getPushStartPosition(Direction.EAST);
+            Location tPushStart=getPushStartPosition(Direction.EAST);
+            Coordinate tStart;
+            Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y);
+            int nPusherId;
             
-            Coordinate tStart=
-            Coordinate tGoal=
+            for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+                if (it->m_tBotColor==Color.BLUE) {
+                    tStart=pair<float,float>(m_tBot.m_fXCm,m_tBot.m_fYCm); // or make constructor for Coordinate
+                    nPusherId=it->id();
+                    break;
+                }
+            }
+            
             TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
             TVecCoord tPath=P.SampledPath(tAStarPath);
+            
+            
+            vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vector<Location> input);
+            
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory)
             
             /* Push box to Parking Space */
             float fDistanceToParking;
@@ -458,13 +511,12 @@ int main(int argc, char *argv[])
             else if(boxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
                 fDistanceToParking=20; // update with real value and add as global const float
             }
-            pair<float,float>(tPushPosition.X,tPushPosition.Y);
-            pair<float,float>(tPushPosition.X+fDistanceToParking,tPushPosition.Y);
+            
+            Location tPushGoal=Location(tPushPosition.X+fDistanceToParking,tPushPosition.Y);
+            tPushStart
             
         }
     }
-    
-    
     
     /* STEP 2 : Move red boxes in Blue Zone to the Red Zone */
     
