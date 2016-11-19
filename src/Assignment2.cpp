@@ -28,6 +28,7 @@ using namespace cv;
 #define GREEN_ID 0
 #define BLUE_ID 5
 
+//////////////// REMOVE AS ALREADY DEFINED IN PLANNER.H /////////////////
 
 // Width and height of rectangle marked by corner codes in cm
 double fieldWidth = 231.14;
@@ -36,6 +37,9 @@ double fieldHeight = 109.86;
 //  Dimension of box/entity
 float boxdim = 7.63;
 
+//////////////////////////////////////////////////////////////////////////
+
+
 enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // East = X-positive
 // North = Y-positive
@@ -43,10 +47,10 @@ enum State {WRONG_SIDE, CORRECT_SIDE, PARKING, DONE};
 // South = Y-negative (shouldn't ever have to push south)
 enum Direction {EAST, NORTH, WEST, SOUTH};
 enum Color {RED, BLUE, GREEN};
-enum Position {RedRight, RedRightfin, RedLeft, RedLeftfin, BlueRight, BlueRightfin, BlueLeft, BlueLeftfin};
+enum Position {RED_RIGHT, RED_RIGHT_FIN, RED_LEFT, RED_LEFT_FIN, BLUE_RIGHT, BLUE_RIGHT_FIN, BLUE_LEFT, BLUE_LEFT_FIN};
+
 /* Discretizing possible positions of boxes/entities based on whether it is in the red/blue zone, in the left/right 
 of its zone (only two possible choices), and if it is in the left/right of the end regions (four choices) */
-
 class Box {
 private:
 // Need to reference the perspective correction to get the position of the box in cm
@@ -57,11 +61,10 @@ public:
 	Entity box;
 	Color boxColor;
 	State currentStatus;
-	bool isHighPriority;
-	int xCm; //to be changed to float !
-	int yCm; //to be changed to float !
-	
-
+    Position currentPosition;
+	bool isHighPriority; //could be removed since our code is not general enough to switch
+	float xCm;
+	float yCm;
 
     /* Constructor */
 
@@ -91,7 +94,7 @@ public:
      Boxes in the parking zone east of the red zone are parking (only low-priority (i.e. blue) boxes should end up here)
      Boxes in the appropriate color zone and close to the north edge of the field are done being moved*/
     
-    State updateBoxStatus() {
+    void updateBoxStatus() {
         State output;
         if (boxColor == Color.RED) {
             if (xCm > fieldWidth/2) {
@@ -114,8 +117,8 @@ public:
                 output = State.WRONG_SIDE;
             }
         }
+        currentStatus=output;
     }
-    
 	
 	/* Get robot position and orientation needed to start pushing the box in the requested direction */
 	Location getPushStartPosition(Direction pushDirection) {
@@ -137,70 +140,34 @@ public:
 			output.x = xCm;
 			output.y = yCm + BOX_OFFSET;
 		}
+        return output;
 	}
 	
 
-	// Update box state based on its position on the field.
-	// Red boxes in the red zone (west of centerline) and blue boxes in the blue zone (east of centerline) are on the correct side.
-	// Boxes in the opposite color's zone are on the wrong side.
-	// Boxes in the parking zone east of the red zone are parking (only low-priority (i.e. blue) boxes should end up here)
-	// Boxes in the appropriate color zone and close to the north edge of the field are done being moved
-	State updateBoxStatus() {
-		State output;
-		Position p_output;
-
-		if (xCm >0.8* fieldWidth){
-			output = State.PARKING;
-		}
-		else{
-			if (boxColor == Color.RED) {
-				if (xCm >= fieldWidth/2 ) {
-					output = State.CORRECT_SIDE;
-					if (yCm < fieldHeight*0.25){
-						p_output=Position.RedRight;
-					}
-					else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
-						p_output=Position.RedLeft;
-					}
-					else if (yCm>fieldHeight*0.75) {
-						output = State.DONE;
-						if (xCm < (0.5*fieldWidth)+boxdim){
-							p_output=Position.RedRightfin;
-						}
-						else{
-							p_output=Position.RedLeftfin;
-						}
-					}	
-				}
-				else {
-					output = State.WRONG_SIDE;
-				}
-			}
-				
-		 	else if (boxColor == Color.BLUE) {
-				if (xCm < fieldWidth/2 ) {
-					output = State.CORRECT_SIDE;
-					if (yCm < fieldHeight*0.25){
-						p_output=Position.BlueRight;
-					}
-					else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75) {
-						p_output=Position.BlueLeft;
-					}
-					else if (yCm>fieldHeight*0.75) {
-						output = State.DONE;
-						if (xCm >= (0.5*fieldWidth)-boxdim){
-							p_output=Position.BlueLeftfin;
-						}
-						else{
-							p_output=Position.BlueRightfin;
-						}
-					}	
-				}
-			else {
-					output = State.WRONG_SIDE;
-				}
-			}
-		}
+    void getdiscreteposition(){
+        Position p_output;
+        if (boxColor == Color.RED && ) {
+            if (xCm > fieldWidth/2) {
+                output = State.CORRECT_SIDE;
+                if (yCm > fieldHeight*0.75) {
+                    output = State.DONE;
+                }
+            } else {
+                output = State.WRONG_SIDE;
+            }
+        } else if (boxColor == Color.BLUE) {
+            if (xCm <= fieldWidth/2) {
+                output = State.CORRECT_SIDE;
+                if (yCm > fieldHeight*0.75) {
+                    output = State.DONE;
+                }
+            } else if (xCm >= fieldWidth*0.8) {
+                output = State.PARKING;
+            } else {
+                output = State.WRONG_SIDE;
+            }
+        }
+    }
 }
 
 class PID {
@@ -359,26 +326,31 @@ int main(int argc, char *argv[])
 
 	vector<Entity> corners;
 	vector<Entity> boxes;
-	
-	Box redBox1;
-	Box redBox2;
-	Box blueBox1;
-	Box blueBox2;
-	
-	
-	Location boxStartPos0{0,0,0};
-	Location boxStartPos1{0,0,0};
-	Location boxStartPos2{0,0,0};
-	Location boxStartPos3{0,0,0};
-	
-	Location boxParkingPos0{0,0,0};
-	Location boxParkingPos1{0,0,0};
-	
-	Location boxRedDest0{0,0,0};
-	Location boxRedDest1{0,0,0};
-	
-	Location boxBlueDest0{0,0,0};
-	Location boxBlueDest1{0,0,0};
+
+    vector<Box> vecBoxes;
+///////// To be removed /////////
+    
+//	Box redBox1;
+//	Box redBox2;
+//	Box blueBox1;
+//	Box blueBox2;
+//	
+//	
+//	Location boxStartPos0{0,0,0};
+//	Location boxStartPos1{0,0,0};
+//	Location boxStartPos2{0,0,0};
+//	Location boxStartPos3{0,0,0};
+//	
+//	Location boxParkingPos0{0,0,0};
+//	Location boxParkingPos1{0,0,0};
+//	
+//	Location boxRedDest0{0,0,0};
+//	Location boxRedDest1{0,0,0};
+//	
+//	Location boxBlueDest0{0,0,0};
+//	Location boxBlueDest1{0,0,0};
+    
+//////////////////////////////////
 
 	while(corners.size() < 4 || boxes.size() < 4){
         data = fc.getFieldData();
@@ -422,30 +394,23 @@ int main(int argc, char *argv[])
 			p1(3,1) = corners[i].y();
 		}
 	}
+    
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        if (boxes[i].id() == 102) {
+            // Red 1
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 112) {
+            // Red 2
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 101) {
+            // Blue 1
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        } else if (boxes[i].id() == 103) {
+            // Blue 2
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        }
+    }
 	
-	for (unsigned i = 0; i < boxes.size(); i++) {
-		if (boxes[i].id() == 102) {
-			// Red 1
-			redBox1 = Box(boxes[i],Color.RED,correction);
-		} else if (boxes[i].id() == 112) {
-			// Red 2
-			redBox2 = Box(boxes[i],Color.RED,correction);
-		} else if (boxes[i].id() == 101) {
-			// Blue 1
-			blueBox1 = Box(boxes[i],Color.BLUE,correction);
-		} else if (boxes[i].id() == 103) {
-			// Blue 2
-			blueBox2 = Box(boxes[i],Color.BLUE,correction);
-		}
-	}
-	
-
-	// if (blueBox1.x() > fieldWidth/2 && blueBox2.x() > fieldWidth/2) {
-		
-	// } else {
-
-	// }
-
 
 	PerspectiveCorrection correction(p1, p2);
 
@@ -456,67 +421,148 @@ int main(int argc, char *argv[])
     
     Planner P;
     ////////////////////////////////////////////////////
-
     
     P.SetGrid();
     
+    /* Main routine */
+    
+    /* STEP 1 : Move blue boxes in Red Zone to the Parking Space */
+    
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
-    for (unsigned i = 0; i < boxes.size(); i++) {
-        Matrix<double, 1, 3> tCenterBoxesMetric= correction.correctPerspectiveMetric(boxes[i].x(),boxes[i].y()); // replace by .xCm and .yCm, once they are fixed (float type)
-        tCenterBoxes.push_back(make_pair(tCenterBoxesMetric(0,0),tCenterBoxesMetric(0,1)));
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        tCenterBoxes.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
     }
-
     /* Map obstacles */
     TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
     
-    /* Main routine */
     
     /* Push blue (least priority) boxes which are in the red zone into the parking space*/
-    for (<#initialization#>; <#condition#>; <#increment#>) {
-        <#statements#>
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        
+        if (!vecBoxes[i].isHighPriority && vecBoxes[i].currentStatus==State.WRONG_SIDE) {
+            
+            /* Move blue robot from its initial position to blue box */
+            Location tPushPosition=getPushStartPosition(Direction.EAST);
+            
+            Coordinate tStart=
+            Coordinate tGoal=
+            TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
+            TVecCoord tPath=P.SampledPath(tAStarPath);
+            
+            /* Push box to Parking Space */
+            float fDistanceToParking;
+            if (boxes[i].currentPosition==Position.RED_RIGHT) {
+                fDistanceToParking=50; // update with real value and add as global const float
+            }
+            else if(boxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
+                fDistanceToParking=20; // update with real value and add as global const float
+            }
+            pair<float,float>(tPushPosition.X,tPushPosition.Y);
+            pair<float,float>(tPushPosition.X+fDistanceToParking,tPushPosition.Y);
+            
+        }
     }
+    
+    
+    
+    /* STEP 2 : Move red boxes in Blue Zone to the Red Zone */
+    
+    /* Get centers of the boxes in cm and put them in a TVecCoord */
+    TVecCoord tCenterBoxes;
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        tCenterBoxes.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
+    }
+    /* Map obstacles */
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
     /* Push red boxes which are in the blue zone to available position in the red zone*/
-    for (<#initialization#>; <#condition#>; <#increment#>) {
-        <#statements#>
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        if (vecBoxes[i].isHighPriority && boxes[i].currentStatus==WRONG_SIDE) {
+            
+            Location tPushPosition=getPushStartPosition(WEST);
+            
+        }
     }
+    
+    
+    
+    /* STEP 3 : Move red boxes to the End Zone */
+    
+    /* Get centers of the boxes in cm and put them in a TVecCoord */
+    TVecCoord tCenterBoxes;
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        tCenterBoxes.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
+    }
+    /* Map obstacles */
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
     /* Push red boxes in Y direction to get them to end position (done State)*/
-    for (<#initialization#>; <#condition#>; <#increment#>) {
-        <#statements#>
+    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+        Location tPushPosition=getPushStartPosition(NORTH);
     }
+    
+    
+    
+    /* STEP 4 : Move blue boxes in Parking Space to the Blue Zone */
+    
+    /* Get centers of the boxes in cm and put them in a TVecCoord */
+    TVecCoord tCenterBoxes;
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        tCenterBoxes.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
+    }
+    /* Map obstacles */
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
     /* Push blue boxes from the parking space to available position in the blue zone */
-    for (<#initialization#>; <#condition#>; <#increment#>) {
-        <#statements#>
+    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+        Location tPushPosition=getPushStartPosition(WEST);
     }
+    
+    
+    
+    /* STEP 5 : Move blue boxes to the End Zone */
+    
+    /* Get centers of the boxes in cm and put them in a TVecCoord */
+    TVecCoord tCenterBoxes;
+    for (unsigned i = 0; i < vecBoxes.size(); i++) {
+        tCenterBoxes.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
+    }
+    /* Map obstacles */
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    
     /* Push blue boxes in Y direction to get them to end position (done State)*/
-    for (<#initialization#>; <#condition#>; <#increment#>) {
-        <#statements#>
+    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+        Location tPushPosition=getPushStartPosition(NORTH);
     }
+    
     
     /* Print outs for debugging */
     
     Coordinate tStart=pair<float,float>(10,10);
     Coordinate tGoal=pair<float,float>(110,110);
     
-    TVecCoord tPath=P.AStarSearch(tStart,tGoal,tObstacles);
+    TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
     
-    cout<<
+    cout<<"Center of Boxes:"<<endl;
     
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
         cout<<it->first<<'\t'<<it->second<<endl;
     }
-    cout<<endl;
     
-    for (TVecCoord::iterator it=tPath.begin(); it!=tPath.end(); ++it) {
+    cout<<endl<<"Map of obstacles:"<<endl;
+    
+    
+    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
         cout<<it->first<<'\t'<<it->second<<endl;
     }
-    cout<<endl;
-
-
-   for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
-       cout<<it->first<<'\t'<<it->second<<endl;
+    
+    cout<<endl<<"Astar path:"<<endl;
+    
+    for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
+        cout<<it->first<<'\t'<<it->second<<endl;
     }
-   
+
 
 
 /* Joe's code*/
