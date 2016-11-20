@@ -18,11 +18,9 @@ using namespace cv;
 
 #define ALLOWED_ANGLE_ERROR 1
 
-// Allowed distance from target is in pixels.
-#define ALLOWED_DISTANCE 10
+#define ALLOWED_DISTANCE 10 // Allowed distance from target is in pixels.
 
-// Distance in cm that the robot should stop driving from the box when preparing to push it
-#define BOX_OFFSET 10
+#define BOX_OFFSET 10 // Distance in cm that the robot should stop driving from the box when preparing to push it
 
 #define RED_ID 3
 #define GREEN_ID 0
@@ -64,7 +62,7 @@ public:
         this->m_tBotColor = t_Color;
         this->m_tCorrection = t_Correction;
         
-        // Perform perspecitve correction to get metric position
+        // Perform perspective correction to get metric position
         Matrix<double, 1, 3> position= t_Correction.correctPerspectiveMetric(t_Bot.x(),t_Bot.y());
         
         this->m_fXCm = position(0,0);
@@ -483,25 +481,28 @@ int main(int argc, char *argv[])
             
             /* Move blue robot from its initial position to blue box */
             Location tPushStart=getPushStartPosition(Direction.EAST);
-            Coordinate tStart;
-            Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y);
+            Location tRobotStart;
+            Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
             int nPusherId;
             
             for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
                 if (it->m_tBotColor==Color.BLUE) {
-                    tStart=pair<float,float>(m_tBot.m_fXCm,m_tBot.m_fYCm); // or make constructor for Coordinate
+                    tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
                     nPusherId=it->id();
                     break;
                 }
             }
             
+            Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+            
             TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
             TVecCoord tPath=P.SampledPath(tAStarPath);
             
+            Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
             
-            vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vector<Location> input);
+            vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
             
-            FollowTrajectory(nPusherId,fc,correction,tTrajectory)
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
             /* Push box to Parking Space */
             float fDistanceToParking;
@@ -537,8 +538,6 @@ int main(int argc, char *argv[])
         }
     }
     
-    
-    
     /* STEP 3 : Move red boxes to the End Zone */
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
@@ -553,7 +552,6 @@ int main(int argc, char *argv[])
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
         Location tPushPosition=getPushStartPosition(NORTH);
     }
-    
     
     
     /* STEP 4 : Move blue boxes in Parking Space to the Blue Zone */

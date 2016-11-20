@@ -57,7 +57,6 @@ struct CompareXandYCoord {
     bool operator()(const Coordinate& obj){return abs(obj.first-x)<Epsilon && abs(obj.second-y)<Epsilon;}
 };
 
-
 class Planner {
 
 public:
@@ -72,6 +71,8 @@ public:
     TVecCoord AStarSearch(Coordinate t_start, Coordinate t_goal ,TVecCoord t_obstacle);
     
     TVecCoord SamplePath(TVecCoord t_AStarPath);
+    
+    Path GetWaypointsAndHeadings(TVecCoord t_sampledPath,float f_initialOrientation ,float f_finalOrientation);
     
     inline TVecCoord GetGrid(){
         return m_tGrid;

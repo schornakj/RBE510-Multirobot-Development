@@ -215,7 +215,7 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 
-TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){
+TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){ // if delta x close to zero => NaN, change that !
     
     TVecCoord tPath;
     float fPrevSlope=0;
@@ -232,6 +232,46 @@ TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){
     
     return tPath;
 }
+
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+
+Path Planner::GetWaypointsAndHeadings(TVecCoord t_sampledPath, float f_initialOrientation, float f_finalOrientation){
+    
+    Path tLocation;
+    Location temp;
+    temp.Orientation=f_finalOrientation;
+    
+    for (int i=(t_sampledPath.size()-1); i>0; --i) {
+        temp.X=t_sampledPath[i].first;
+        temp.Y=t_sampledPath[i].second;
+        tLocation.insert(tLocation.begin(),temp);
+        if (abs(temp.X-t_sampledPath[i-1].first)<Epsilon) {
+            if (temp.Y>t_sampledPath[i-1]) {
+                temp.Orientation=270;
+            }
+            else {
+                temp.Orientation=90;
+            }
+        }
+        else if(abs(temp.Y-t_sampledPath[i-1].second)<Epsilon){
+            if (temp.X>t_sampledPath[i-1]) {
+                temp.Orientation=180;
+            }
+            else {
+                temp.Orientation=0;
+            }
+        }
+        else {
+            temp.Orientation=atan((temp.Y-t_sampledPath[i-1].second)/(temp.X-t_sampledPath[i-1].first))/PI*180;
+        }
+    }
+    temp.Orientation=f_initialOrientation;
+    tLocation.insert(tLocation.begin(),temp);
+    return tLocation;
+}
+
+//!t_sampledPath[i-1].CompareXandYCoord(temp.X,temp.Y)
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
