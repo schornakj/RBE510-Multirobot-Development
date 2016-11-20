@@ -57,7 +57,7 @@ public:
 
 	CubicBezier(float p1x, float p1y, float p1theta, float p4x, float p4y, float p4theta, float curveFactor){
 		//cout << "p1theta: " << p1theta << " p4theta: " << p4theta << endl;
-		cout << "#2 Making a curve starting at [" << p1x << "," << p1y << "]cm and ending at [" << p4x << "," << p4y << "]" << endl;
+		//cout << "#2 Making a curve starting at [" << p1x << "," << p1y << "]cm and ending at [" << p4x << "," << p4y << "]" << endl;
 		float intermediateOffset = curveFactor * sqrt(pow(p4x-p1x,2) + pow(p4y-p1y,2));
 
 		float p2x = p1x + intermediateOffset * cos(p1theta*M_PI/180);

@@ -247,7 +247,7 @@ Path Planner::GetWaypointsAndHeadings(TVecCoord t_sampledPath, float f_initialOr
         temp.Y=t_sampledPath[i].second;
         tLocation.insert(tLocation.begin(),temp);
         if (abs(temp.X-t_sampledPath[i-1].first)<Epsilon) {
-            if (temp.Y>t_sampledPath[i-1]) {
+            if (temp.Y>t_sampledPath[i-1].first) {
                 temp.Orientation=270;
             }
             else {
@@ -255,7 +255,7 @@ Path Planner::GetWaypointsAndHeadings(TVecCoord t_sampledPath, float f_initialOr
             }
         }
         else if(abs(temp.Y-t_sampledPath[i-1].second)<Epsilon){
-            if (temp.X>t_sampledPath[i-1]) {
+            if (temp.X>t_sampledPath[i-1].first) {
                 temp.Orientation=180;
             }
             else {
@@ -271,7 +271,6 @@ Path Planner::GetWaypointsAndHeadings(TVecCoord t_sampledPath, float f_initialOr
     return tLocation;
 }
 
-//!t_sampledPath[i-1].CompareXandYCoord(temp.X,temp.Y)
 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////

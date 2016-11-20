@@ -58,15 +58,15 @@ public:
     float m_fYCm;
     
     Bot(Entity t_Bot, Color t_Color, PerspectiveCorrection t_Correction){
-        this->m_tBot = t_Bot;
-        this->m_tBotColor = t_Color;
-        this->m_tCorrection = t_Correction;
+        m_tBot = t_Bot;
+        m_tBotColor = t_Color;
+        m_tCorrection = t_Correction;
         
         // Perform perspective correction to get metric position
         Matrix<double, 1, 3> position= t_Correction.correctPerspectiveMetric(t_Bot.x(),t_Bot.y());
         
-        this->m_fXCm = position(0,0);
-        this->m_fYCm = position(0,1);
+        m_fXCm = position(0,0);
+        m_fYCm = position(0,1);
     }
 
 };

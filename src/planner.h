@@ -12,12 +12,13 @@ using namespace std;
 const float PI = 3.1415927;
 const float ArenaWidth=231.14; //in X direction
 const float ArenaDepth=109.86; //in Y direction
-const float BoxSize=20;
-const float MaxSubdiv=7.63;
+const float BoxSize=15;
+const float MaxSubdiv=7.5;
 const float Epsilon=0.001;
 
 struct Location {
     float X,Y,Orientation;
+    Location():X(0),Y(0),Orientation(0) {}
     Location(float X,float Y, float Orientation): X(X), Y(Y), Orientation(Orientation) {}
 };
 
