@@ -39,12 +39,12 @@ const float t_BR2RR=68;
 const float t_BL2RL=65;
 const float t_RR2RRE=63;
 const float t_RL2RLE=20;
-const float t_P2BR=;
-const float t_P2BL=;
-const float t_BRy=26
-const float t_BLy=74
-const float t_BR2BRE=;
-const float t_BL2BLE=;
+const float t_P2BR=140;
+const float t_P2BL=107;
+const float t_BRy=26;
+const float t_BLy=74;
+const float t_BR2BRE=80;
+const float t_BL2BLE=37;
 /*
 RED_RIGHT=(138,27)
 RED_LEFT=(167,70)
@@ -72,11 +72,12 @@ public:
     Color m_tBotColor;
     float m_fXCm;
     float m_fYCm;
+
     
     Bot(Entity t_Bot, Color t_Color, PerspectiveCorrection t_Correction){
         m_tBot = t_Bot;
         m_tBotColor = t_Color;
-        m_tCorrection = t_Correction;
+        correction = t_Correction;
         
         // Perform perspective correction to get metric position
         Matrix<double, 1, 3> position= t_Correction.correctPerspectiveMetric(t_Bot.x(),t_Bot.y());
@@ -100,7 +101,6 @@ public:
     Color boxColor;
     State currentStatus; // box in right/wrong color zone or parking space or in end zone (four choices)
     Position currentPosition; // box in the left/right and red/blue zone or left/right and red/blue end zone (eight choices)
-    Available availablePosition;
     bool isHighPriority; //could be removed since our code is not general enough to switch
     float xCm;
     float yCm;
@@ -119,8 +119,8 @@ public:
         this->yCm = position(0,1);
         
         // Update box position based on field zone rules
-        this->currentStatus = updateBoxStatus();
-        if (boxColor == Color.RED) {
+        updateBoxStatus();
+        if (boxColor == RED) {
             isHighPriority = true;
         } else {
             isHighPriority = false;
@@ -135,25 +135,25 @@ public:
     
     void updateBoxStatus() {
         State output;
-        if (boxColor == Color.RED) {
+        if (boxColor == RED) {
             if (xCm > fieldWidth/2) {
-                output = State.CORRECT_SIDE;
+                output = CORRECT_SIDE;
                 if (yCm > fieldHeight*0.75) {
-                    output = State.DONE;
+                    output = DONE;
                 }
             } else {
-                output = State.WRONG_SIDE;
+                output = WRONG_SIDE;
             }
-        } else if (boxColor == Color.BLUE) {
+        } else if (boxColor == BLUE) {
             if (xCm <= fieldWidth/2) {
-                output = State.CORRECT_SIDE;
+                output = CORRECT_SIDE;
                 if (yCm > fieldHeight*0.75) {
-                    output = State.DONE;
+                    output = DONE;
                 }
             } else if (xCm >= fieldWidth*0.8) {
-                output = State.PARKING;
+                output = PARKING;
             } else {
-                output = State.WRONG_SIDE;
+                output = WRONG_SIDE;
             }
         }
         currentStatus=output;
@@ -162,22 +162,22 @@ public:
     /* Get robot position and orientation needed to start pushing the box in the requested direction */
     Location getPushStartPosition(Direction pushDirection) {
         Location output;
-        if (pushDirection == Direction.EAST) {
+        if (pushDirection == EAST) {
             output.Orientation = 0;
-            output.y = yCm;
-            output.x = xCm - BOX_OFFSET;
-        } else if (pushDirection == Direction.NORTH) {
+            output.Y = yCm;
+            output.X = xCm - BOX_OFFSET;
+        } else if (pushDirection == NORTH) {
             output.Orientation = 90;
-            output.x = xCm;
-            output.y = yCm - BOX_OFFSET;
-        } else if (pushDirection == Direction.WEST) {
+            output.X = xCm;
+            output.Y = yCm - BOX_OFFSET;
+        } else if (pushDirection == WEST) {
             output.Orientation = 180;
-            output.y = yCm;
-            output.x = xCm + BOX_OFFSET;
-        } else if (pushDirection == Direction.SOUTH) {
+            output.Y = yCm;
+            output.X = xCm + BOX_OFFSET;
+        } else if (pushDirection == SOUTH) {
             output.Orientation = 270;
-            output.x = xCm;
-            output.y = yCm + BOX_OFFSET;
+            output.Y = xCm;
+            output.X = yCm + BOX_OFFSET;
         }
         return output;
     }
@@ -193,36 +193,36 @@ void getDiscretePosition(){
             BLUE_LEFT(102,74)
         */
         Position p_output;
-        if (boxColor == Color.RED) {
+        if (boxColor == RED) {
             if (yCm<fieldHeight*0.25) {
-                p_output=Position.RED_RIGHT;
+                p_output=RED_RIGHT;
             }
             else if (yCm > fieldHeight*0.25 && yCm<fieldHeight*0.75){
-                p_output=Position.RED_LEFT;
+                p_output=RED_LEFT;
             }
             else if (yCm > fieldHeight*0.75){
-                if (xCm < ((0.5*fieldWidth)+boxdim){
-                    p_output=Position.RED_RIGHT_END;
+                if (xCm < ((0.5*fieldWidth)+boxdim)) {
+                    p_output=RED_RIGHT_END;
                 }
                 else{
-                    p_poutput=Position.RED_LEFT_END;
+                    p_output=RED_LEFT_END;
                 }
             }
         }
-        else if (boxColor ==Color.Blue){
+        else if (boxColor ==BLUE){
             if (xCm < fieldWidth/2){
                 if (yCm < fieldHeight*0.25){
-                    p_output=Position.BLUE_RIGHT;
+                    p_output=BLUE_RIGHT;
                 }
                 else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75){
-                    p_output=Position.BLUE_LEFT;
+                    p_output=BLUE_LEFT;
                 }
                 else if (yCm > fieldHeight*0.75){
                     if (xCm >= ((0.5*fieldWidth)-boxdim)){
-                        p_output=Position.BLUE_LEFT_END;
+                        p_output=BLUE_LEFT_END;
                     }
                     else{
-                        p_output=Position.BLUE_RIGHT_END;
+                        p_output=BLUE_RIGHT_END;
                     }
                 }
             }
@@ -497,10 +497,10 @@ int main(int argc, char *argv[])
     /* Push blue (least priority) boxes which are in the red zone into the parking space*/
     for (unsigned i = 0; i < vecBoxes.size(); i++) {
         
-        if (!vecBoxes[i].isHighPriority && vecBoxes[i].currentStatus==State.WRONG_SIDE) {
+        if (!vecBoxes[i].isHighPriority && vecBoxes[i].currentStatus==WRONG_SIDE) {
             
             /* Move blue robot from its initial position to blue box */
-            Location tPushStart=getPushStartPosition(Direction.EAST);
+            Location tPushStart=getPushStartPosition(EAST);
             Location tRobotStart;
             Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
             int nPusherId;
@@ -528,10 +528,10 @@ int main(int argc, char *argv[])
             vecBoxes[i].getDiscretePosition();
             
             float fDistanceToParking;
-            if (vecBoxes[i].currentPosition==Position.RED_RIGHT) {
+            if (vecBoxes[i].currentPosition==RED_RIGHT) {
                 fDistanceToParking=31; // update with real value and add as global const float
             }
-            else if(vecBoxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
+            else if(vecBoxes[i].currentPosition==RED_LEFT){ // else would be enough
                 fDistanceToParking=19; // update with real value and add as global const float 19,31,45,60
             }
             
@@ -641,10 +641,10 @@ int main(int argc, char *argv[])
             /* Push box to available position in Red Zone */
             vecBoxes[i].getDiscretePosition();
             
-            if(vecBoxes[i].currentPosition==Position.BLUE_RIGHT){
+            if(vecBoxes[i].currentPosition==BLUE_RIGHT){
                 float fDistanceToPostion=t_BR2RR;
             }
-            else if(vecBoxes[i].currentPosition==Position.BLUE_LEFT)
+            else if(vecBoxes[i].currentPosition==BLUE_LEFT)
                 float fDistanceToPosition=t_BL2RL;
             }
 
@@ -754,10 +754,10 @@ int main(int argc, char *argv[])
         
         vecBoxes[i].getDiscretePosition();
         
-         if(vecBoxes[i].currentPosition==Position.RED_RIGHT){
+         if(vecBoxes[i].currentPosition==RED_RIGHT){
                 float fDistanceToPostion=t_RR2RRE;
             }
-        else if(vecBoxes[i].currentPosition==Position.RED_LEFT){
+        else if(vecBoxes[i].currentPosition==RED_LEFT){
                 float fDistanceToPosition=t_RL2RLE;
             }
 
@@ -982,10 +982,10 @@ int main(int argc, char *argv[])
         
         vecBoxes[i].getDiscretePosition();
         
-       if(vecBoxes[i].currentPosition==Position.BLUE_RIGHT){
+       if(vecBoxes[i].currentPosition==BLUE_RIGHT){
                 float fDistanceToPostion=t_BR2BRE;
         }
-        else if(vecBoxes[i].currentPosition==Position.BLUE_LEFT){
+        else if(vecBoxes[i].currentPosition==BLUE_LEFT){
                 float fDistanceToPosition=t_BL2BLE;
         }
 

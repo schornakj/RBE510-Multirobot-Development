@@ -23,6 +23,7 @@ class PerspectiveCorrection {
 		Matrix<double, 3, 3> invtransform;
 
 	public:
+		PerspectiveCorrection(){}
 		PerspectiveCorrection(Matrix<double, 4, 2> p1, Matrix<double, 4, 2> p2) {
 			Point2f inputQuad[4];
 			Point2f outputQuad[4];
