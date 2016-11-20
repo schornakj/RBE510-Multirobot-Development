@@ -263,9 +263,11 @@ Path Planner::GetWaypointsAndHeadings(TVecCoord t_sampledPath, float f_initialOr
             }
         }
         else {
-            temp.Orientation=atan((temp.Y-t_sampledPath[i-1].second)/(temp.X-t_sampledPath[i-1].first))/PI*180;
+            temp.Orientation=atan2((temp.Y-t_sampledPath[i-1].second),(temp.X-t_sampledPath[i-1].first))/PI*180;
         }
     }
+    temp.X=t_sampledPath[0].first;
+    temp.Y=t_sampledPath[0].second;
     temp.Orientation=f_initialOrientation;
     tLocation.insert(tLocation.begin(),temp);
     return tLocation;

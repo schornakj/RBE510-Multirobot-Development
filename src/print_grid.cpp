@@ -2,6 +2,7 @@
 #include "planner.h"
 
 #define BOX_OFFSET 10
+#define PARKING_DISTANCE 30
 
 using namespace std;
 
@@ -12,7 +13,7 @@ vector<CubicBezier> TrajectoryFromWaypointsAndHeadings(vector<Location> input) {
     
     vector<CubicBezier> output;
     
-    for (int i = 0; i < input.size() - 1; i++) {
+    for (int i = 0; i < input.size()-1; i++) {
         output.push_back(CubicBezier(input[i].X, input[i].Y, input[i].Orientation, input[i+1].X, input[i+1].Y, input[i+1].Orientation, 0.5));
     }
     return output;
@@ -41,10 +42,18 @@ int main(int argc, char *argv[])
     TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
     TVecCoord tPath=P.SamplePath(tAStarPath);
     
-    Location tPushStart=Location(10,55,0);
+    Location tPushStart=Location(130-BOX_OFFSET,40,0);
     
     Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,0,tPushStart.Orientation);
     vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+    
+    Location tPushGoal=Location(tPushStart.X+PARKING_DISTANCE,tPushStart.Y,tPushStart.Orientation);
+    
+    Path vecWaypointsHeadings2;
+    vecWaypointsHeadings2.push_back(tPushStart);
+    vecWaypointsHeadings2.push_back(tPushGoal);
+    
+    vector<CubicBezier> tTrajectory2= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings2);
     
     cout<<"Obstacles:"<<endl;
     
@@ -64,6 +73,12 @@ int main(int argc, char *argv[])
         cout<<it->first<<'\t'<<it->second<<endl;
     }
     
+    cout<<endl<<"Way points and headings:"<<endl;
+    
+    for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+        cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
+    }
+    
     cout<<endl<<"Bezier:"<<endl;
     
     for (int i=0; i < tTrajectory.size(); i++) {
@@ -78,5 +93,21 @@ int main(int argc, char *argv[])
         }
         cout<<endl;
     }
+    
+    cout<<endl<<"Bezier 2 (push box):"<<endl;
+    
+    for (int i=0; i < tTrajectory2.size(); i++) {
+        //cout << "Current segment: " << i << endl;
+        //cout << "Making a curve starting at [" << current.controlPoints[0].x << "," << current.controlPoints[0].y << "]cm and ending at [" << current.controlPoints[3].x << "," << current.controlPoints[3].y << "]" << endl;
+        
+        CubicBezier current = tTrajectory2[i];
+        float stepSize = 0.05;
+        for (float j = 0.2; j < 1 + stepSize; j += stepSize){
+            cout<<current.GetPoint(j).x<<'\t'<<current.GetPoint(j).y<<endl;
+            //cout << "Current Target: #" << j << " " << coordinate << "px " << '\t' << current.GetPoint(j).x << "cmX " << current.GetPoint(j).y << "cmY " << endl;
+        }
+        cout<<endl;
+    }
+
     
 }

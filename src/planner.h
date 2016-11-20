@@ -49,7 +49,7 @@ struct CompareXandY {
 struct Distance {
     pair<float,float> temp;
     Distance(Coordinate point): temp(point) {}
-    bool operator()(const Coordinate& obj1,const Coordinate& obj2){return abs(obj1.first-temp.first)< abs(obj2.first-temp.first) && abs(obj1.second-temp.second)< abs(obj2.second-temp.second);}
+    bool operator()(const Coordinate& obj1,const Coordinate& obj2){return ((pow(obj1.first-temp.first,2)+pow(obj1.second-temp.second,2))< (pow(obj2.first-temp.first,2)+pow(obj2.second-temp.second,2))) ;}//((abs(obj1.first-temp.first) < abs(obj2.first-temp.first)) && (abs(obj1.second-temp.second)<abs(obj2.second-temp.second)));}
 };
 
 struct CompareXandYCoord {

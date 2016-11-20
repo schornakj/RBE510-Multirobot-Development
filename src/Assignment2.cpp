@@ -464,6 +464,8 @@ int main(int argc, char *argv[])
     
     /* Main routine */
     
+    //NOTE : OUR CODE WILL NOT WORK IF BOTH BLUE BOXES (BOTH RED BOXES) START AT THE SAME Y VALUE !
+    
     /* STEP 1 : Move blue boxes in Red Zone to the Parking Space */
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
@@ -513,13 +515,22 @@ int main(int argc, char *argv[])
                 fDistanceToParking=20; // update with real value and add as global const float
             }
             
-            Location tPushGoal=Location(tPushPosition.X+fDistanceToParking,tPushPosition.Y);
-            tPushStart
+            Location tPushGoal=Location(tPushStart.X+fDistanceToParking,tPushStart.Y,tPushStart.Orientation);
+            
+            Path vecWaypointsHeadings;
+            vecWaypointsHeadings.push_back(tPushStart);
+            vecWaypointsHeadings.push_back(tPushGoal);
+            
+            vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+            
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
         }
     }
     
     /* STEP 2 : Move red boxes in Blue Zone to the Red Zone */
+    
+    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -529,16 +540,56 @@ int main(int argc, char *argv[])
     /* Map obstacles */
     TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
     
-    /* Push red boxes which are in the blue zone to available position in the red zone*/
+    /* Push red boxes which are in the Blue Zone to available position in the Red Zone*/
     for (unsigned i = 0; i < vecBoxes.size(); i++) {
         if (vecBoxes[i].isHighPriority && boxes[i].currentStatus==WRONG_SIDE) {
             
-            Location tPushPosition=getPushStartPosition(WEST);
+            /* Move red robot from its initial position to red box */
+            Location tPushStart=getPushStartPosition(WEST);
+            Location tRobotStart;
+            Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
+            int nPusherId;
             
+            for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+                if (it->m_tBotColor==Color.BLUE) {
+                    tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
+                    nPusherId=it->id();
+                    break;
+                }
+            }
+            
+            Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+            
+            TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
+            TVecCoord tPath=P.SampledPath(tAStarPath);
+            
+            Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+            
+            vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+            
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+            
+            /* Push box to available position in Red Zone */
+            
+            float fDistanceToPosition;
+            
+            // ADD CODE TO FIND AVAILABLE POSITION AND DISTANCE TO POSITION
+            
+            Location tPushGoal=Location(tPushStart.X+fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
+            
+            Path vecWaypointsHeadings;
+            vecWaypointsHeadings.push_back(tPushStart);
+            vecWaypointsHeadings.push_back(tPushGoal);
+            
+            vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+            
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         }
     }
     
     /* STEP 3 : Move red boxes to the End Zone */
+    
+    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -550,11 +601,54 @@ int main(int argc, char *argv[])
     
     /* Push red boxes in Y direction to get them to end position (done State)*/
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
-        Location tPushPosition=getPushStartPosition(NORTH);
+        
+        /* Move red robot from its current position to red box */
+        Location tPushStart=getPushStartPosition(NORTH);
+        Location tRobotStart;
+        Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
+        int nPusherId;
+        
+        for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+            if (it->m_tBotColor==Color.BLUE) {
+                tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
+                nPusherId=it->id();
+                break;
+            }
+        }
+        
+        Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+        
+        TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
+        TVecCoord tPath=P.SampledPath(tAStarPath);
+        
+        Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+        
+        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        
+        /* Push box to its position in the End Zone */
+        
+        float fDistanceToPosition;
+        
+        //ADD CODE TO FIND DISTANCE TO POSITION
+        
+        Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
+        
+        Path vecWaypointsHeadings;
+        vecWaypointsHeadings.push_back(tPushStart);
+        vecWaypointsHeadings.push_back(tPushGoal);
+        
+        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        
     }
     
     
     /* STEP 4 : Move blue boxes in Parking Space to the Blue Zone */
+    
+    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -566,12 +660,54 @@ int main(int argc, char *argv[])
     
     /* Push blue boxes from the parking space to available position in the blue zone */
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
-        Location tPushPosition=getPushStartPosition(WEST);
+        
+        /* Move blue robot from its current position to blue box (with correct orientation) */
+        
+        Location tPushStart=getPushStartPosition(WEST);
+        Location tRobotStart;
+        Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
+        int nPusherId;
+        
+        for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+            if (it->m_tBotColor==Color.BLUE) {
+                tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
+                nPusherId=it->id();
+                break;
+            }
+        }
+        
+        Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+        
+        TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
+        TVecCoord tPath=P.SampledPath(tAStarPath);
+        
+        Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+        
+        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        
+        /* Push box to available position in Blue Zone */
+        
+        float fDistanceToPosition;
+        
+        // ADD CODE TO FIND AVAILABLE POSITION AND DISTANCE TO POSITION
+        
+        Location tPushGoal=Location(tPushStart.X-fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
+        
+        Path vecWaypointsHeadings;
+        vecWaypointsHeadings.push_back(tPushStart);
+        vecWaypointsHeadings.push_back(tPushGoal);
+        
+        vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        
     }
     
-    
-    
     /* STEP 5 : Move blue boxes to the End Zone */
+    
+    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -583,36 +719,76 @@ int main(int argc, char *argv[])
     
     /* Push blue boxes in Y direction to get them to end position (done State)*/
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+        
+        /* Move blue robot from its current position to blue box */
         Location tPushPosition=getPushStartPosition(NORTH);
+        Location tRobotStart;
+        Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
+        int nPusherId;
+        
+        for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+            if (it->m_tBotColor==Color.BLUE) {
+                tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
+                nPusherId=it->id();
+                break;
+            }
+        }
+        
+        Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+        
+        TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
+        TVecCoord tPath=P.SampledPath(tAStarPath);
+        
+        Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+        
+        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        
+        /* Push box to its position in the End Zone */
+        
+        float fDistanceToPosition;
+        
+        //ADD CODE TO FIND DISTANCE TO POSITION
+        
+        Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
+        
+        Path vecWaypointsHeadings;
+        vecWaypointsHeadings.push_back(tPushStart);
+        vecWaypointsHeadings.push_back(tPushGoal);
+        
+        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        
     }
     
-    
-    /* Print outs for debugging */
-    
-    Coordinate tStart=pair<float,float>(10,10);
-    Coordinate tGoal=pair<float,float>(110,110);
-    
-    TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
-    
-    cout<<"Center of Boxes:"<<endl;
-    
-    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
-        cout<<it->first<<'\t'<<it->second<<endl;
-    }
-    
-    cout<<endl<<"Map of obstacles:"<<endl;
-    
-    
-    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
-        cout<<it->first<<'\t'<<it->second<<endl;
-    }
-    
-    cout<<endl<<"Astar path:"<<endl;
-    
-    for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
-        cout<<it->first<<'\t'<<it->second<<endl;
-    }
-
+//    /* Print outs for debugging */
+//    
+//    Coordinate tStart=pair<float,float>(10,10);
+//    Coordinate tGoal=pair<float,float>(110,110);
+//    
+//    TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
+//    
+//    cout<<"Center of Boxes:"<<endl;
+//    
+//    for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
+//    
+//    cout<<endl<<"Map of obstacles:"<<endl;
+//    
+//    
+//    for (TVecCoord::iterator it=tObstacles.begin(); it!=tObstacles.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
+//    
+//    cout<<endl<<"Astar path:"<<endl;
+//    
+//    for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
+//        cout<<it->first<<'\t'<<it->second<<endl;
+//    }
+//
 
 
 /* Joe's code*/
