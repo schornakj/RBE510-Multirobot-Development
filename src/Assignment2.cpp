@@ -35,16 +35,16 @@ double fieldHeight = 109.86;
 //  Dimension of box/entity
 float boxdim = 7.63;
 
-float t_BR2RR=68;
-float t_BL2RL=65;
-float t_RR2RRE=63;
-float t_RL2RLE=20;
-float t_P2BR=;
-float t_P2BL=;
-float t_BRy=26
-float t_BLy=74
-float t_BR2BRE=;
-float t_BL2BLE=;
+const float t_BR2RR=68;
+const float t_BL2RL=65;
+const float t_RR2RRE=63;
+const float t_RL2RLE=20;
+const float t_P2BR=;
+const float t_P2BL=;
+const float t_BRy=26
+const float t_BLy=74
+const float t_BR2BRE=;
+const float t_BL2BLE=;
 /*
 RED_RIGHT=(138,27)
 RED_LEFT=(167,70)
@@ -183,57 +183,51 @@ public:
     }
     
     
-void getdiscreteposition(){
+void getDiscretePosition(){
         /* Checks if a box is red/blue. If red or blue, this will check if the discrete position is the right,
            left or in the left/right end positions. Additionally, if the entities are not in the end position, it will
            display the available discrete positoin for each entity. 
-            RED_RIGHT=(138,27)
-            RED_LEFT=(167,70)
-            BLUE_RIGHT=(70,26)
-            BLUE_LEFT=(102,74)  
+            RED_RIGHT(138,27)
+            RED_LEFT(167,70)
+            BLUE_RIGHT(70,26)
+            BLUE_LEFT(102,74)
         */
         Position p_output;
         if (boxColor == Color.RED) {
             if (yCm<fieldHeight*0.25) {
-                p_output=Position.Red_Right;
-                // availablePosition tRed_available=pair<float,float>(167,70);
+                p_output=Position.RED_RIGHT;
             }
             else if (yCm > fieldHeight*0.25 && yCm<fieldHeight*0.75){
-                p_output=Position.Red_Left;
-                // availablePosition tRed_available=pair<float,float>(138,27);
+                p_output=Position.RED_LEFT;
             }
             else if (yCm > fieldHeight*0.75){
                 if (xCm < ((0.5*fieldWidth)+boxdim){
-                    p_output=Position.Red_Right_End;
+                    p_output=Position.RED_RIGHT_END;
                 }
                 else{
-                    p_poutput=Position.Red_Left_End;
+                    p_poutput=Position.RED_LEFT_END;
                 }
             }
         }
         else if (boxColor ==Color.Blue){
             if (xCm < fieldWidth/2){
                 if (yCm < fieldHeight*0.25){
-                    p_output=Position.Blue_Right;
-                    // availablePosition tBlue_available=pair<float,float>(102,74);
+                    p_output=Position.BLUE_RIGHT;
                 }
                 else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75){
-                    p_output=Position.Blue_Left;
-                    // availablePosition tBlue_available=pair<float,float>(70,26);
+                    p_output=Position.BLUE_LEFT;
                 }
                 else if (yCm > fieldHeight*0.75){
                     if (xCm >= ((0.5*fieldWidth)-boxdim)){
-                        p_output=Position.Blue_Left_End;
+                        p_output=Position.BLUE_LEFT_END;
                     }
                     else{
-                        p_output=Position.Blue_Right_End;
+                        p_output=Position.BLUE_RIGHT_END;
                     }
                 }
             }
         }
         currentPosition=p_output;
-        // return tRed_available;
-        // return tBlue_available;
     }
 };
 
@@ -400,7 +394,6 @@ int main(int argc, char *argv[])
     vector<Bot> vecBots;
     
 
-
 	while(corners.size() < 4 || boxes.size() < 4){
         data = fc.getFieldData();
 		for(unsigned i = 0; i < data.entities.size(); i++){
@@ -532,11 +525,13 @@ int main(int argc, char *argv[])
             FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
             /* Push box to Parking Space */
+            vecBoxes[i].getDiscretePosition();
+            
             float fDistanceToParking;
-            if (vecboxes[i].currentPosition==Position.RED_RIGHT) {
+            if (vecBoxes[i].currentPosition==Position.RED_RIGHT) {
                 fDistanceToParking=31; // update with real value and add as global const float
             }
-            else if(vecboxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
+            else if(vecBoxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
                 fDistanceToParking=19; // update with real value and add as global const float 19,31,45,60
             }
             
@@ -555,11 +550,56 @@ int main(int argc, char *argv[])
     
     /* STEP 2 : Move red boxes in Blue Zone to the Red Zone */
     
-    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
-
-
-
+    /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
     
+    FieldData data = fc.getFieldData();
+    
+    vector<Entity> boxes;
+    vector<Box> vecBoxes;
+    vector<Bot> vecBots;
+
+    while(boxes.size() < 4){
+        data = fc.getFieldData();
+        for(unsigned i = 0; i < data.entities.size(); i++){
+            if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
+                boxes.push_back(data.entities[i]);
+            }
+        }
+        if (boxes.size() < 4){
+            boxes.clear();
+        }
+    }
+    
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        if (boxes[i].id() == 102) {
+            // Red 1
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 112) {
+            // Red 2
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 101) {
+            // Blue 1
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        } else if (boxes[i].id() == 103) {
+            // Blue 2
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        }
+    }
+    
+    for (unsigned i = 0; i < data.robots.size(); i++){
+        if (data.robots[i].id() == RED_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            cout << "Found Red" << endl;
+        }
+        else if (data.robots[i].id() == GREEN_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            cout << "Found Green" << endl;
+        }
+        else if (data.robots[i].id() == BLUE_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            cout << "Found Blue" << endl;
+        }
+    }
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -599,11 +639,12 @@ int main(int argc, char *argv[])
             FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
             /* Push box to available position in Red Zone */
-
-            if(vecboxes[i].currentPosition==Position.Blue_Right){
+            vecBoxes[i].getDiscretePosition();
+            
+            if(vecBoxes[i].currentPosition==Position.BLUE_RIGHT){
                 float fDistanceToPostion=t_BR2RR;
             }
-            else if(vecboxes[i].currentPosition==Position.Blue_Left)
+            else if(vecBoxes[i].currentPosition==Position.BLUE_LEFT)
                 float fDistanceToPosition=t_BL2RL;
             }
 
@@ -615,15 +656,64 @@ int main(int argc, char *argv[])
             vecWaypointsHeadings.push_back(tPushGoal);
             
             vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
-            
+        
             FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         }
     }
     
     /* STEP 3 : Move red boxes to the End Zone */
     
-    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
+    /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
+    FieldData data = fc.getFieldData();
     
+    vector<Entity> boxes;
+    vector<Box> vecBoxes;
+    vector<Bot> vecBots;
+    
+    while(boxes.size() < 4){
+        data = fc.getFieldData();
+        for(unsigned i = 0; i < data.entities.size(); i++){
+            if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
+                boxes.push_back(data.entities[i]);
+            }
+        }
+        if (boxes.size() < 4){
+            boxes.clear();
+        }
+    }
+    
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        if (boxes[i].id() == 102) {
+            // Red 1
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 112) {
+            // Red 2
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 101) {
+            // Blue 1
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        } else if (boxes[i].id() == 103) {
+            // Blue 2
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        }
+    }
+    
+    for (unsigned i = 0; i < data.robots.size(); i++){
+        if (data.robots[i].id() == RED_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            cout << "Found Red" << endl;
+        }
+        else if (data.robots[i].id() == GREEN_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            cout << "Found Green" << endl;
+        }
+        else if (data.robots[i].id() == BLUE_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            cout << "Found Blue" << endl;
+        }
+    }
+                    
+                    
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
     for (unsigned i = 0; i < vecBoxes.size(); i++) {
@@ -661,12 +751,13 @@ int main(int argc, char *argv[])
         FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         
         /* Push box to its position in the End Zone */
-
         
-         if(vecboxes[i].currentPosition==Position.Red_Right){
+        vecBoxes[i].getDiscretePosition();
+        
+         if(vecBoxes[i].currentPosition==Position.RED_RIGHT){
                 float fDistanceToPostion=t_RR2RRE;
             }
-        else if(vecboxes[i].currentPosition==Position.Red_Left){
+        else if(vecBoxes[i].currentPosition==Position.RED_LEFT){
                 float fDistanceToPosition=t_RL2RLE;
             }
 
@@ -685,7 +776,57 @@ int main(int argc, char *argv[])
     
     /* STEP 4 : Move blue boxes in Parking Space to the Blue Zone */
     
-    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
+    /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
+    FieldData data = fc.getFieldData();
+    
+    vector<Entity> boxes;
+    vector<Box> vecBoxes;
+    vector<Bot> vecBots;
+    
+    while(boxes.size() < 4){
+        data = fc.getFieldData();
+        for(unsigned i = 0; i < data.entities.size(); i++){
+            if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
+                boxes.push_back(data.entities[i]);
+            }
+        }
+        if (boxes.size() < 4){
+            boxes.clear();
+        }
+    }
+    
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        if (boxes[i].id() == 102) {
+            // Red 1
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 112) {
+            // Red 2
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 101) {
+            // Blue 1
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        } else if (boxes[i].id() == 103) {
+            // Blue 2
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        }
+    }
+    
+    for (unsigned i = 0; i < data.robots.size(); i++){
+        if (data.robots[i].id() == RED_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            cout << "Found Red" << endl;
+        }
+        else if (data.robots[i].id() == GREEN_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            cout << "Found Green" << endl;
+        }
+        else if (data.robots[i].id() == BLUE_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            cout << "Found Blue" << endl;
+        }
+    }
+    
+    
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -726,11 +867,13 @@ int main(int argc, char *argv[])
         
         /* Push box to available position in Blue Zone */
         
-        if(abs(vecboxes[i].yCm- t_BRy)<=5){
+        vecBoxes[i].getDiscretePosition();
+        
+        if(abs(vecBoxes[i].yCm- t_BRy)<=5){
             float fDistanceToPostion=t_P2BR;
         }
                
-        else if(abs(vecboxes[i.].yCm-t_BLy)<=5){ 
+        else if(abs(vecBoxes[i].yCm-t_BLy)<=5){
                 float fDistanceToPosition=t_P2BL;
         }
         
@@ -749,7 +892,55 @@ int main(int argc, char *argv[])
     
     /* STEP 5 : Move blue boxes to the End Zone */
     
-    // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
+    /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
+    FieldData data = fc.getFieldData();
+    
+    vector<Entity> boxes;
+    vector<Box> vecBoxes;
+    vector<Bot> vecBots;
+    
+    while(boxes.size() < 4){
+        data = fc.getFieldData();
+        for(unsigned i = 0; i < data.entities.size(); i++){
+            if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
+                boxes.push_back(data.entities[i]);
+            }
+        }
+        if (boxes.size() < 4){
+            boxes.clear();
+        }
+    }
+    
+    for (unsigned i = 0; i < boxes.size(); i++) {
+        if (boxes[i].id() == 102) {
+            // Red 1
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 112) {
+            // Red 2
+            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+        } else if (boxes[i].id() == 101) {
+            // Blue 1
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        } else if (boxes[i].id() == 103) {
+            // Blue 2
+            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+        }
+    }
+    
+    for (unsigned i = 0; i < data.robots.size(); i++){
+        if (data.robots[i].id() == RED_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            cout << "Found Red" << endl;
+        }
+        else if (data.robots[i].id() == GREEN_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            cout << "Found Green" << endl;
+        }
+        else if (data.robots[i].id() == BLUE_ID){
+            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            cout << "Found Blue" << endl;
+        }
+    }
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -787,10 +978,14 @@ int main(int argc, char *argv[])
         
         FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         
-       if(vecboxes[i].currentPosition==Position.Blue_Right){
+        /* Push box to position in End Zone */
+        
+        vecBoxes[i].getDiscretePosition();
+        
+       if(vecBoxes[i].currentPosition==Position.BLUE_RIGHT){
                 float fDistanceToPostion=t_BR2BRE;
         }
-        else if(vecboxes[i].currentPosition==Position.Red_Left){
+        else if(vecBoxes[i].currentPosition==Position.BLUE_LEFT){
                 float fDistanceToPosition=t_BL2BLE;
         }
 
