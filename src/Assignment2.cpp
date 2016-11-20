@@ -166,31 +166,86 @@ public:
     }
     
     
-    void getdiscreteposition(){
+//     void getdiscreteposition(){
+//         Position p_output;
+//         if (boxColor == Color.RED && ) {
+//             if (xCm > fieldWidth/2) {
+//                 output = State.CORRECT_SIDE;
+//                 if (yCm > fieldHeight*0.75) {
+//                     output = State.DONE;
+//                 }
+//             } else {
+//                 output = State.WRONG_SIDE;
+//             }
+//         } else if (boxColor == Color.BLUE) {
+//             if (xCm <= fieldWidth/2) {
+//                 output = State.CORRECT_SIDE;
+//                 if (yCm > fieldHeight*0.75) {
+//                     output = State.DONE;
+//                 }
+//             } else if (xCm >= fieldWidth*0.8) {
+//                 output = State.PARKING;
+//             } else {
+//                 output = State.WRONG_SIDE;
+//             }
+//         }
+//     }
+// };
+
+void getdiscreteposition(){
+        /* Checks if a box is red/blue. If red or blue, this will check if the discrete position is the right,
+           left or in the left/right end positions. Additionally, if the entities are not in the end position, it will
+           display the available discrete positoin for each entity. 
+            RED_RIGHT=(138,27)
+            RED_LEFT=(167,70)
+            BLUE_RIGHT=(70,26)
+            BLUE_LEFT=(102,74)  
+        */
         Position p_output;
-        if (boxColor == Color.RED && ) {
-            if (xCm > fieldWidth/2) {
-                output = State.CORRECT_SIDE;
-                if (yCm > fieldHeight*0.75) {
-                    output = State.DONE;
-                }
-            } else {
-                output = State.WRONG_SIDE;
+        if (boxColor == Color.RED) {
+            if (yCm<fieldHeight*0.25) {
+                p_output=Position.Red_Right;
+                availablePosition tRed_available=pair<float,float>(167,70);
+
             }
-        } else if (boxColor == Color.BLUE) {
-            if (xCm <= fieldWidth/2) {
-                output = State.CORRECT_SIDE;
-                if (yCm > fieldHeight*0.75) {
-                    output = State.DONE;
+            else if (yCm > fieldHeight*0.25 && yCm<fieldHeight*0.75){
+                p_output=Position.Red_Left;
+                availablePosition tRed_available=pair<float,float>(138,27);
+            }
+            else if (yCm > fieldHeight*0.75){
+                if (xCm < ((0.5*fieldWidth)+boxdim){
+                    p_output=Position.Red_Right_End;
                 }
-            } else if (xCm >= fieldWidth*0.8) {
-                output = State.PARKING;
-            } else {
-                output = State.WRONG_SIDE;
+                else{
+                    p_poutput=Position.Red_Left_End;
+                }
             }
         }
+        else if (boxColor ==Color.Blue){
+            if (xCm < fieldWidth/2){
+                if (yCm < fieldHeight*0.25){
+                    p_output=Position.Blue_Right;
+                    availablePosition tBlue_available=pair<float,float>(102,74);
+                }
+                else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75){
+                    p_output=Position.Blue_Left;
+                    availablePosition tBlue_available=pair<float,float>(70,26);
+                }
+                else if (yCm > fieldHeight*0.75){
+                    if (xCm >= ((0.5*fieldWidth)-boxdim)){
+                        p_output=Position.Blue_Left_End;
+                    }
+                    else{
+                        p_output=Position.Blue_Right_End;
+                    }
+                }
+            }
+        }
+        currentPosition=p_output;
     }
 };
+
+
 
 class PID {
 public:
@@ -352,29 +407,7 @@ int main(int argc, char *argv[])
     vector<Box> vecBoxes;
     vector<Bot> vecBots;
     
-///////// To be removed /////////
-    
-//	Box redBox1;
-//	Box redBox2;
-//	Box blueBox1;
-//	Box blueBox2;
-//	
-//	
-//	Location boxStartPos0{0,0,0};
-//	Location boxStartPos1{0,0,0};
-//	Location boxStartPos2{0,0,0};
-//	Location boxStartPos3{0,0,0};
-//	
-//	Location boxParkingPos0{0,0,0};
-//	Location boxParkingPos1{0,0,0};
-//	
-//	Location boxRedDest0{0,0,0};
-//	Location boxRedDest1{0,0,0};
-//	
-//	Location boxBlueDest0{0,0,0};
-//	Location boxBlueDest1{0,0,0};
-    
-//////////////////////////////////
+
 
 	while(corners.size() < 4 || boxes.size() < 4){
         data = fc.getFieldData();
@@ -509,10 +542,10 @@ int main(int argc, char *argv[])
             /* Push box to Parking Space */
             float fDistanceToParking;
             if (boxes[i].currentPosition==Position.RED_RIGHT) {
-                fDistanceToParking=50; // update with real value and add as global const float
+                fDistanceToParking=20; // update with real value and add as global const float
             }
             else if(boxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
-                fDistanceToParking=20; // update with real value and add as global const float
+                fDistanceToParking=30; // update with real value and add as global const float
             }
             
             Location tPushGoal=Location(tPushStart.X+fDistanceToParking,tPushStart.Y,tPushStart.Orientation);
@@ -531,6 +564,10 @@ int main(int argc, char *argv[])
     /* STEP 2 : Move red boxes in Blue Zone to the Red Zone */
     
     // REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)
+
+
+
+    
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes;
@@ -571,7 +608,7 @@ int main(int argc, char *argv[])
             
             /* Push box to available position in Red Zone */
             
-            float fDistanceToPosition;
+            float fDistanceToPosition=tRed_available.first-vecBoxes[i].xCm;
             
             // ADD CODE TO FIND AVAILABLE POSITION AND DISTANCE TO POSITION
             
@@ -629,9 +666,10 @@ int main(int argc, char *argv[])
         
         /* Push box to its position in the End Zone */
         
-        float fDistanceToPosition;
+        // float fDistanceToPosition;
         
         //ADD CODE TO FIND DISTANCE TO POSITION
+        float fDistanceToPosition=tRed_available.second-vecBoxes[i].yCm;
         
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
@@ -692,6 +730,7 @@ int main(int argc, char *argv[])
         float fDistanceToPosition;
         
         // ADD CODE TO FIND AVAILABLE POSITION AND DISTANCE TO POSITION
+         float fDistanceToPosition=tBlue_available.first-vecBoxes[i].xCm;
         
         Location tPushGoal=Location(tPushStart.X-fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
         
@@ -750,6 +789,7 @@ int main(int argc, char *argv[])
         float fDistanceToPosition;
         
         //ADD CODE TO FIND DISTANCE TO POSITION
+        float fDistanceToPosition=tBlue_available.second-vecBoxes[i].xCm;
         
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
