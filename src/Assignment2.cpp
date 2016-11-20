@@ -35,6 +35,22 @@ double fieldHeight = 109.86;
 //  Dimension of box/entity
 float boxdim = 7.63;
 
+float t_BR2RR=68;
+float t_BL2RL=65;
+float t_RR2RRE=63;
+float t_RL2RLE=20;
+float t_P2BR=;
+float t_P2BL=;
+float t_BRy=26
+float t_BLy=74
+float t_BR2BRE=;
+float t_BL2BLE=;
+/*
+RED_RIGHT=(138,27)
+RED_LEFT=(167,70)
+BLUE_RIGHT=(70,26)
+BLUE_LEFT=(102,74)
+*/
 //////////////////////////////////////////////////////////////////////////
 
 
@@ -84,6 +100,7 @@ public:
     Color boxColor;
     State currentStatus; // box in right/wrong color zone or parking space or in end zone (four choices)
     Position currentPosition; // box in the left/right and red/blue zone or left/right and red/blue end zone (eight choices)
+    Available availablePosition;
     bool isHighPriority; //could be removed since our code is not general enough to switch
     float xCm;
     float yCm;
@@ -166,32 +183,6 @@ public:
     }
     
     
-//     void getdiscreteposition(){
-//         Position p_output;
-//         if (boxColor == Color.RED && ) {
-//             if (xCm > fieldWidth/2) {
-//                 output = State.CORRECT_SIDE;
-//                 if (yCm > fieldHeight*0.75) {
-//                     output = State.DONE;
-//                 }
-//             } else {
-//                 output = State.WRONG_SIDE;
-//             }
-//         } else if (boxColor == Color.BLUE) {
-//             if (xCm <= fieldWidth/2) {
-//                 output = State.CORRECT_SIDE;
-//                 if (yCm > fieldHeight*0.75) {
-//                     output = State.DONE;
-//                 }
-//             } else if (xCm >= fieldWidth*0.8) {
-//                 output = State.PARKING;
-//             } else {
-//                 output = State.WRONG_SIDE;
-//             }
-//         }
-//     }
-// };
-
 void getdiscreteposition(){
         /* Checks if a box is red/blue. If red or blue, this will check if the discrete position is the right,
            left or in the left/right end positions. Additionally, if the entities are not in the end position, it will
@@ -205,12 +196,11 @@ void getdiscreteposition(){
         if (boxColor == Color.RED) {
             if (yCm<fieldHeight*0.25) {
                 p_output=Position.Red_Right;
-                availablePosition tRed_available=pair<float,float>(167,70);
-
+                // availablePosition tRed_available=pair<float,float>(167,70);
             }
             else if (yCm > fieldHeight*0.25 && yCm<fieldHeight*0.75){
                 p_output=Position.Red_Left;
-                availablePosition tRed_available=pair<float,float>(138,27);
+                // availablePosition tRed_available=pair<float,float>(138,27);
             }
             else if (yCm > fieldHeight*0.75){
                 if (xCm < ((0.5*fieldWidth)+boxdim){
@@ -225,11 +215,11 @@ void getdiscreteposition(){
             if (xCm < fieldWidth/2){
                 if (yCm < fieldHeight*0.25){
                     p_output=Position.Blue_Right;
-                    availablePosition tBlue_available=pair<float,float>(102,74);
+                    // availablePosition tBlue_available=pair<float,float>(102,74);
                 }
                 else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75){
                     p_output=Position.Blue_Left;
-                    availablePosition tBlue_available=pair<float,float>(70,26);
+                    // availablePosition tBlue_available=pair<float,float>(70,26);
                 }
                 else if (yCm > fieldHeight*0.75){
                     if (xCm >= ((0.5*fieldWidth)-boxdim)){
@@ -242,6 +232,8 @@ void getdiscreteposition(){
             }
         }
         currentPosition=p_output;
+        // return tRed_available;
+        // return tBlue_available;
     }
 };
 
@@ -541,11 +533,11 @@ int main(int argc, char *argv[])
             
             /* Push box to Parking Space */
             float fDistanceToParking;
-            if (boxes[i].currentPosition==Position.RED_RIGHT) {
-                fDistanceToParking=20; // update with real value and add as global const float
+            if (vecboxes[i].currentPosition==Position.RED_RIGHT) {
+                fDistanceToParking=31; // update with real value and add as global const float
             }
-            else if(boxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
-                fDistanceToParking=30; // update with real value and add as global const float
+            else if(vecboxes[i].currentPosition==Position.RED_LEFT){ // else would be enough
+                fDistanceToParking=19; // update with real value and add as global const float 19,31,45,60
             }
             
             Location tPushGoal=Location(tPushStart.X+fDistanceToParking,tPushStart.Y,tPushStart.Orientation);
@@ -607,11 +599,15 @@ int main(int argc, char *argv[])
             FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
             /* Push box to available position in Red Zone */
-            
-            float fDistanceToPosition=tRed_available.first-vecBoxes[i].xCm;
-            
-            // ADD CODE TO FIND AVAILABLE POSITION AND DISTANCE TO POSITION
-            
+
+            if(vecboxes[i].currentPosition==Position.Blue_Right){
+                float fDistanceToPostion=t_BR2RR;
+            }
+            else if(vecboxes[i].currentPosition==Position.Blue_Left)
+                float fDistanceToPosition=t_BL2RL;
+            }
+
+
             Location tPushGoal=Location(tPushStart.X+fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
             
             Path vecWaypointsHeadings;
@@ -665,12 +661,15 @@ int main(int argc, char *argv[])
         FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         
         /* Push box to its position in the End Zone */
+
         
-        // float fDistanceToPosition;
-        
-        //ADD CODE TO FIND DISTANCE TO POSITION
-        float fDistanceToPosition=tRed_available.second-vecBoxes[i].yCm;
-        
+         if(vecboxes[i].currentPosition==Position.Red_Right){
+                float fDistanceToPostion=t_RR2RRE;
+            }
+        else if(vecboxes[i].currentPosition==Position.Red_Left){
+                float fDistanceToPosition=t_RL2RLE;
+            }
+
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
         Path vecWaypointsHeadings;
@@ -727,11 +726,15 @@ int main(int argc, char *argv[])
         
         /* Push box to available position in Blue Zone */
         
-        float fDistanceToPosition;
+        if(abs(vecboxes[i].yCm- t_BRy)<=5){
+            float fDistanceToPostion=t_P2BR;
+        }
+               
+        else if(abs(vecboxes[i.].yCm-t_BLy)<=5){ 
+                float fDistanceToPosition=t_P2BL;
+        }
         
-        // ADD CODE TO FIND AVAILABLE POSITION AND DISTANCE TO POSITION
-         float fDistanceToPosition=tBlue_available.first-vecBoxes[i].xCm;
-        
+      
         Location tPushGoal=Location(tPushStart.X-fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
         
         Path vecWaypointsHeadings;
@@ -784,13 +787,13 @@ int main(int argc, char *argv[])
         
         FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         
-        /* Push box to its position in the End Zone */
-        
-        float fDistanceToPosition;
-        
-        //ADD CODE TO FIND DISTANCE TO POSITION
-        float fDistanceToPosition=tBlue_available.second-vecBoxes[i].xCm;
-        
+       if(vecboxes[i].currentPosition==Position.Blue_Right){
+                float fDistanceToPostion=t_BR2BRE;
+        }
+        else if(vecboxes[i].currentPosition==Position.Red_Left){
+                float fDistanceToPosition=t_BL2BLE;
+        }
+
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
         Path vecWaypointsHeadings;
