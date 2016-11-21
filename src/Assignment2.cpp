@@ -36,14 +36,14 @@ double fieldHeight = 109.86;
 float boxdim = 7.63;
 
 const float t_BR2RR=68;
-const float t_BL2RL=65;
-const float t_RR2RRE=63;
+const float t_BL2RL=75;
+const float t_RR2RRE=70;
 const float t_RL2RLE=20;
 const float t_P2BR=140;
 const float t_P2BL=107;
 const float t_BRy=26;
 const float t_BLy=74;
-const float t_BR2BRE=80;
+const float t_BR2BRE=75;
 const float t_BL2BLE=37;
 /*
 RED_RIGHT=(138,27)
@@ -704,7 +704,7 @@ int main(int argc, char *argv[])
             /* Push box to available position in Red Zone */
             vecBoxes2[i].getDiscretePosition();
             
-            float fDistanceToPosition=70;
+            float fDistanceToPosition=60;
             
             if(vecBoxes2[i].currentPosition==BLUE_RIGHT){
                 fDistanceToPosition=t_BR2RR;
@@ -852,7 +852,7 @@ int main(int argc, char *argv[])
         
         vecBoxes3[i].getDiscretePosition();
         
-        float fDistanceToPosition;
+        float fDistanceToPosition=50;
         
         if(vecBoxes3[i].currentPosition==RED_RIGHT){
                 fDistanceToPosition=t_RR2RRE;
@@ -1004,7 +1004,7 @@ int main(int argc, char *argv[])
         
         vecBoxes4[i].getDiscretePosition();
         
-        float fDistanceToPosition;
+        float fDistanceToPositio=70;
 
         if(abs(vecBoxes4[i].yCm- t_BRy)<=5){
             fDistanceToPosition=t_P2BR;
@@ -1153,7 +1153,7 @@ int main(int argc, char *argv[])
         
         vecBoxes5[i].getDiscretePosition();
         
-        float fDistanceToPosition;
+        float fDistanceToPosition=50;
        if(vecBoxes5[i].currentPosition==BLUE_RIGHT){
                 fDistanceToPosition=t_BR2BRE;
         }
