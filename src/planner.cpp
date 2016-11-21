@@ -158,7 +158,7 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
                     float fTempX=tCurrent.X+i*m_fStep;
                     float fTempY=tCurrent.Y+j*m_fStep;
                     if (fTempX>0 && fTempY>0 && fTempX<ArenaWidth && fTempY<ArenaDepth) {
-                        TVecCoord::iterator it4=find_if(t_obstacles.begin(),t_obstacles.end(),CompareXandYCoord(fTempX,fTempY));
+                        TVecCoord::iterator it4=find_if(t_obstacles.begin(),t_obstacles.end(),CompareXandYCoord(fTempX+5,fTempY+5));
                         if (it4==t_obstacles.end()) {
                             Node tTemp;
                             tTemp.X=fTempX;
@@ -221,6 +221,14 @@ TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){
     TVecCoord tPath;
     float fPrevSlope=0;
     float fCurrSlope;
+    
+//    tPath.push_back(make_pair(t_AStarPath.front().first,t_AStarPath.front().second));
+//    if (abs(t_AStarPath[0].first-t_AStarPath[1].first)<Epsilon) {
+//        fCurrSlope=1000;
+//    }
+//    else {
+//        fCurrSlope=(t_AStarPath[i-1].second-t_AStarPath[i].second)/(t_AStarPath[i-1].first-t_AStarPath[i].first);
+//    }
     
     for (int i=1; i<t_AStarPath.size(); ++i) {
         if (abs(t_AStarPath[i-1].first-t_AStarPath[i].first)<Epsilon) {

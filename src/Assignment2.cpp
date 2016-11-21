@@ -644,6 +644,7 @@ int main(int argc, char *argv[])
     
     /* Push red boxes which are in the Blue Zone to available position in the Red Zone*/
     for (unsigned i = 0; i < vecBoxes2.size(); i++) {
+        
         if (vecBoxes2[i].isHighPriority && vecBoxes2[i].currentStatus==WRONG_SIDE) {
             
             /* Move red robot from its initial position to red box */
@@ -653,7 +654,7 @@ int main(int argc, char *argv[])
             int nPusherId;
             
             for (vector<Bot>::iterator it=vecBots2.begin(); it!=vecBots2.end(); ++it) {
-                if (it->m_tBotColor==BLUE) {
+                if (it->m_tBotColor==RED) {
                     tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
                     nPusherId=it->m_tBot.id();
                     break;
@@ -676,7 +677,6 @@ int main(int argc, char *argv[])
             for (TVecCoord::iterator it=tObstacles2.begin(); it!=tObstacles2.end(); ++it) {
                 cout<<it->first<<'\t'<<it->second<<endl;
             }
-
             
             TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles2);
             TVecCoord tPath=P.SamplePath(tAStarPath);
@@ -685,16 +685,16 @@ int main(int argc, char *argv[])
             
             vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
             
-            cout<<endl<<"Waypoints:"<<endl;
-            
-            for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
-                cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
-            }
-            
             cout<<endl<<"Astar path:"<<endl;
             
             for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
                 cout<<it->first<<'\t'<<it->second<<endl;
+            }
+            
+            cout<<endl<<"Waypoints:"<<endl;
+            
+            for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+                cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
             }
             
             cout<<endl<<"Bezier:"<<endl;
@@ -704,7 +704,7 @@ int main(int argc, char *argv[])
             /* Push box to available position in Red Zone */
             vecBoxes2[i].getDiscretePosition();
             
-            float fDistanceToPosition;
+            float fDistanceToPosition=70;
             
             if(vecBoxes2[i].currentPosition==BLUE_RIGHT){
                 fDistanceToPosition=t_BR2RR;
@@ -800,7 +800,7 @@ int main(int argc, char *argv[])
         int nPusherId;
         
         for (vector<Bot>::iterator it=vecBots3.begin(); it!=vecBots3.end(); ++it) {
-            if (it->m_tBotColor==BLUE) {
+            if (it->m_tBotColor==RED) {
                 tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
                 nPusherId=it->m_tBot.id();
                 break;
