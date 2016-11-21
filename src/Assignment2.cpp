@@ -33,7 +33,7 @@ double fieldWidth = 231.14;
 double fieldHeight = 109.86;
 
 //  Dimension of box/entity
-float boxdim = 20;
+float boxdim = 7.63;
 
 const float t_BR2RR=68;
 const float t_BL2RL=65;
