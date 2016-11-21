@@ -22,9 +22,9 @@ using namespace cv;
 
 #define BOX_OFFSET 10 // Distance in cm that the robot should stop driving from the box when preparing to push it
 
-#define RED_ID 5
-#define GREEN_ID 0
-#define BLUE_ID 3
+#define RED_ID 3
+#define GREEN_ID 5
+#define BLUE_ID 4
 
 //////////////// REMOVE AS ALREADY DEFINED IN PLANNER.H /////////////////
 
@@ -731,12 +731,13 @@ int main(int argc, char *argv[])
     /* STEP 3 : Move red boxes to the End Zone */
     
     /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
+    
     data = fc.getFieldData();
     
     vector<Entity> boxes3;
     vector<Box> vecBoxes3;
     vector<Bot> vecBots3;
-
+    
     while(boxes3.size() < 4){
         data = fc.getFieldData();
         for(unsigned i = 0; i < data.entities.size(); i++){
@@ -779,8 +780,7 @@ int main(int argc, char *argv[])
             cout << "Found Blue" << endl;
         }
     }
-                    
-                    
+    
     /* Get centers of the boxes in cm and put them in a TVecCoord */
     TVecCoord tCenterBoxes3;
     for (unsigned i = 0; i < vecBoxes3.size(); i++) {
@@ -793,6 +793,8 @@ int main(int argc, char *argv[])
     for (unsigned i = 0; i < vecBoxes3.size(); i++) {
 
         if (vecBoxes3[i].isHighPriority && vecBoxes3[i].currentStatus==CORRECT_SIDE) {
+            
+            
         /* Move red robot from its current position to red box */
         Location tPushStart=vecBoxes3[i].getPushStartPosition(NORTH);
         Location tRobotStart;
@@ -876,6 +878,56 @@ int main(int argc, char *argv[])
         FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
 
         }
+        
+        data = fc.getFieldData();
+        
+        boxes3.clear();
+        vecBoxes3.clear();
+        vecBots3.clear();
+        
+        while(boxes3.size() < 4){
+            data = fc.getFieldData();
+            for(unsigned i = 0; i < data.entities.size(); i++){
+                if (data.entities[i].id() >= 101 && data.entities[i].id() <= 112) {
+                    boxes3.push_back(data.entities[i]);
+                }
+            }
+            if (boxes3.size() < 4){
+                boxes3.clear();
+            }
+        }
+        
+        for (unsigned i = 0; i < boxes3.size(); i++) {
+            if (boxes3[i].id() == 102) {
+                // Red 1
+                vecBoxes3.push_back(Box(boxes3[i],RED,correction));
+            } else if (boxes3[i].id() == 112) {
+                // Red 2
+                vecBoxes3.push_back(Box(boxes3[i],RED,correction));
+            } else if (boxes3[i].id() == 101) {
+                // Blue 1
+                vecBoxes3.push_back(Box(boxes3[i],BLUE,correction));
+            } else if (boxes3[i].id() == 103) {
+                // Blue 2
+                vecBoxes3.push_back(Box(boxes3[i],BLUE,correction));
+            }
+        }
+        
+        for (unsigned i = 0; i < data.robots.size(); i++){
+            if (data.robots[i].id() == RED_ID){
+                vecBots3.push_back(Bot(data.robots[i],RED,correction));
+                cout << "Found Red" << endl;
+            }
+            else if (data.robots[i].id() == GREEN_ID){
+                vecBots3.push_back(Bot(data.robots[i],GREEN,correction));
+                cout << "Found Green" << endl;
+            }
+            else if (data.robots[i].id() == BLUE_ID){
+                vecBots3.push_back(Bot(data.robots[i],BLUE,correction));
+                cout << "Found Blue" << endl;
+            }
+        }
+        
     }
     
     

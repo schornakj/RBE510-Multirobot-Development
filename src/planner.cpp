@@ -158,7 +158,7 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
                     float fTempX=tCurrent.X+i*m_fStep;
                     float fTempY=tCurrent.Y+j*m_fStep;
                     if (fTempX>0 && fTempY>0 && fTempX<ArenaWidth && fTempY<ArenaDepth) {
-                        TVecCoord::iterator it4=find_if(t_obstacles.begin(),t_obstacles.end(),CompareXandYCoord(fTempX+5,fTempY+5));
+                        TVecCoord::iterator it4=find_if(t_obstacles.begin(),t_obstacles.end(),CompareXandYCoord(fTempX,fTempY));
                         if (it4==t_obstacles.end()) {
                             Node tTemp;
                             tTemp.X=fTempX;
