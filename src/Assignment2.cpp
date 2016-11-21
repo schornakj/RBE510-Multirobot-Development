@@ -22,9 +22,9 @@ using namespace cv;
 
 #define BOX_OFFSET 10 // Distance in cm that the robot should stop driving from the box when preparing to push it
 
-#define RED_ID 3
+#define RED_ID 5
 #define GREEN_ID 0
-#define BLUE_ID 5
+#define BLUE_ID 4
 
 //////////////// REMOVE AS ALREADY DEFINED IN PLANNER.H /////////////////
 
@@ -324,15 +324,16 @@ void SendToPoint(int id, FieldComputer fc, int targetx, int targety) {
 
 void FollowTrajectory(int id, FieldComputer fc, PerspectiveCorrection correction, vector<CubicBezier> trajectory) {
 	for (int i=0; i < trajectory.size(); i++) {
-		cout << "Current segment: " << i << endl;
+		//cout << "Current segment: " << i << endl;
         //cout << "Making a curve starting at [" << current.controlPoints[0].x << "," << current.controlPoints[0].y << "]cm and ending at [" << current.controlPoints[3].x << "," << current.controlPoints[3].y << "]" << endl;
 
 		CubicBezier current = trajectory[i];
-        float stepSize = 0.05;
+        float stepSize = 0.2;//0.05;
 		for (float j = 0.2; j < 1 + stepSize; j += stepSize){
 			Matrix<double,1,3> coordinate = correction.correctPerspectivePixels(current.GetPoint(j).x,current.GetPoint(j).y);
-			cout << "Current Target: #" << j << " " << coordinate << "px " << '\t' << current.GetPoint(j).x << "cmX " << current.GetPoint(j).y << "cmY " << endl;
-			SendToPoint(id, fc, (int)coordinate(0,0),(int)coordinate(0,1));
+			//cout << "Current Target: #" << j << " " << coordinate << "px " << '\t' << current.GetPoint(j).x << "cmX " << current.GetPoint(j).y << "cmY " << endl;
+			cout<<current.GetPoint(j).x<<'\t' << current.GetPoint(j).y<<endl;
+            SendToPoint(id, fc, (int)coordinate(0,0),(int)coordinate(0,1));
 		}
 	}
 }
@@ -534,7 +535,13 @@ int main(int argc, char *argv[])
             Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
             
             vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
-
+            
+            cout<<endl<<"Waypoints:"<<endl;
+           
+           
+            for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+               cout<<it->X<<'\t'<<it->Y<<it->Orientation<<endl;
+            }
             
             cout<<endl<<"Astar path:"<<endl;
            
@@ -542,7 +549,7 @@ int main(int argc, char *argv[])
                cout<<it->first<<'\t'<<it->second<<endl;
             }
 
-            
+            cout<<endl<<"Bezier:"<<endl;
             FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
             /* Push box to Parking Space */
@@ -563,7 +570,8 @@ int main(int argc, char *argv[])
             vecWaypointsHeadings1.push_back(tPushGoal);
             
             vector<CubicBezier> tTrajectory1= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
-            
+
+            cout<<endl<<"Bezier 2:"<<endl;
             FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
             
         }
