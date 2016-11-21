@@ -515,6 +515,8 @@ int main(int argc, char *argv[])
             
             Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
             
+            cout<<"Step 1"<<endl;
+            
             cout<<"Center of Boxes:"<<endl;
            
             for (TVecCoord::iterator it=tCenterBoxes1.begin(); it!=tCenterBoxes1.end(); ++it) {
@@ -540,7 +542,7 @@ int main(int argc, char *argv[])
            
            
             for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
-               cout<<it->X<<'\t'<<it->Y<<it->Orientation<<endl;
+               cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
             }
             
             cout<<endl<<"Astar path:"<<endl;
@@ -562,6 +564,8 @@ int main(int argc, char *argv[])
             else if(vecBoxes[i].currentPosition==RED_LEFT){ // else would be enough
                 fDistanceToParking=19; // update with real value and add as global const float 19,31,45,60
             }
+            
+            cout<<endl<<"Distance to Parking: "<<fDistanceToParking<<endl;
             
             Location tPushGoal=Location(tPushStart.X+fDistanceToParking,tPushStart.Y,tPushStart.Orientation);
             
@@ -658,6 +662,22 @@ int main(int argc, char *argv[])
             
             Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
             
+            cout<<"Step 2"<<endl;
+            
+            cout<<"Center of Boxes:"<<endl;
+            
+            for (TVecCoord::iterator it=tCenterBoxes2.begin(); it!=tCenterBoxes2.end(); ++it) {
+                cout<<it->first<<'\t'<<it->second<<endl;
+            }
+            
+            cout<<endl<<"Map of obstacles:"<<endl;
+            
+            
+            for (TVecCoord::iterator it=tObstacles2.begin(); it!=tObstacles2.end(); ++it) {
+                cout<<it->first<<'\t'<<it->second<<endl;
+            }
+
+            
             TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles2);
             TVecCoord tPath=P.SamplePath(tAStarPath);
             
@@ -665,11 +685,25 @@ int main(int argc, char *argv[])
             
             vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
             
+            cout<<endl<<"Waypoints:"<<endl;
+            
+            for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+                cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
+            }
+            
+            cout<<endl<<"Astar path:"<<endl;
+            
+            for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
+                cout<<it->first<<'\t'<<it->second<<endl;
+            }
+            
+            cout<<endl<<"Bezier:"<<endl;
+            
             FollowTrajectory(nPusherId,fc,correction,tTrajectory);
             
             /* Push box to available position in Red Zone */
             vecBoxes2[i].getDiscretePosition();
-
+            
             float fDistanceToPosition;
             
             if(vecBoxes2[i].currentPosition==BLUE_RIGHT){
@@ -679,7 +713,8 @@ int main(int argc, char *argv[])
                 fDistanceToPosition=t_BL2RL;
             }
             
-
+            cout<<endl<<"Distance to Position: "<<fDistanceToPosition<<endl;
+            
             Location tPushGoal=Location(tPushStart.X+fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
             
             Path vecWaypointsHeadings1;
@@ -688,6 +723,7 @@ int main(int argc, char *argv[])
             
             vector<CubicBezier> tTrajectory1=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
+            cout<<endl<<"Bezier 2:"<<endl;
             FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         }
     }
@@ -772,12 +808,42 @@ int main(int argc, char *argv[])
         }
         
         Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+            
+        cout<<"Step 3:"<<endl;
+            
+        cout<<"Center of Boxes:"<<endl;
+        
+        for (TVecCoord::iterator it=tCenterBoxes3.begin(); it!=tCenterBoxes3.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
+        cout<<endl<<"Map of obstacles:"<<endl;
+        
+        
+        for (TVecCoord::iterator it=tObstacles3.begin(); it!=tObstacles3.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
         
         TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles3);
         TVecCoord tPath=P.SamplePath(tAStarPath);
         
         Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
+            
+        cout<<endl<<"Waypoints:"<<endl;
         
+        for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+            cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
+        }
+        
+        cout<<endl<<"Astar path:"<<endl;
+        
+        for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
+        cout<<endl<<"Bezier:"<<endl;
+
         vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
         
         FollowTrajectory(nPusherId,fc,correction,tTrajectory);
@@ -785,16 +851,18 @@ int main(int argc, char *argv[])
         /* Push box to its position in the End Zone */
         
         vecBoxes3[i].getDiscretePosition();
-
+        
         float fDistanceToPosition;
         
-         if(vecBoxes3[i].currentPosition==RED_RIGHT){
+        if(vecBoxes3[i].currentPosition==RED_RIGHT){
                 fDistanceToPosition=t_RR2RRE;
             }
         else if(vecBoxes3[i].currentPosition==RED_LEFT){
                 fDistanceToPosition=t_RL2RLE;
             }
 
+        cout<<endl<<"Distance to Position: "<<fDistanceToPosition<<endl;
+            
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
         Path vecWaypointsHeadings1;
@@ -803,6 +871,8 @@ int main(int argc, char *argv[])
         
         vector<CubicBezier> tTrajectory1= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
+        cout<<endl<<"Bezier 2:"<<endl;
+            
         FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
 
         }
@@ -891,6 +961,21 @@ int main(int argc, char *argv[])
         }
         
         Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+            
+        cout<<"Step 4:"<<endl;
+        
+        cout<<"Center of Boxes:"<<endl;
+        
+        for (TVecCoord::iterator it=tCenterBoxes4.begin(); it!=tCenterBoxes4.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
+        cout<<endl<<"Map of obstacles:"<<endl;
+        
+        
+        for (TVecCoord::iterator it=tObstacles4.begin(); it!=tObstacles4.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
         
         TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles4);
         TVecCoord tPath=P.SamplePath(tAStarPath);
@@ -898,6 +983,20 @@ int main(int argc, char *argv[])
         Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
         
         vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        
+        cout<<endl<<"Waypoints:"<<endl;
+        
+        for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+            cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
+        }
+        
+        cout<<endl<<"Astar path:"<<endl;
+        
+        for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
+        cout<<endl<<"Bezier:"<<endl;
         
         FollowTrajectory(nPusherId,fc,correction,tTrajectory);
         
@@ -915,7 +1014,8 @@ int main(int argc, char *argv[])
             fDistanceToPosition=t_P2BL;
         }
         
-      
+        cout<<endl<<"Distance to Position: "<<fDistanceToPosition<<endl;
+            
         Location tPushGoal=Location(tPushStart.X-fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
         
         Path vecWaypointsHeadings1;
@@ -924,6 +1024,8 @@ int main(int argc, char *argv[])
         
         vector<CubicBezier> tTrajectory1=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
+        cout<<"Bezier 2"<<endl;
+            
         FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         }
     }
@@ -1006,11 +1108,42 @@ int main(int argc, char *argv[])
         }
         
         Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
+            
+        cout<<"Step 5:"<<endl;
+        
+        cout<<"Center of Boxes:"<<endl;
+        
+        for (TVecCoord::iterator it=tCenterBoxes5.begin(); it!=tCenterBoxes5.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
+        cout<<endl<<"Map of obstacles:"<<endl;
+        
+        
+        for (TVecCoord::iterator it=tObstacles5.begin(); it!=tObstacles5.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+
         
         TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles5);
         TVecCoord tPath=P.SamplePath(tAStarPath);
         
         Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
+            
+        cout<<endl<<"Waypoints:"<<endl;
+        
+        for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
+            cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
+        }
+        
+        cout<<endl<<"Astar path:"<<endl;
+        
+        for (TVecCoord::iterator it=tAStarPath.begin(); it!=tAStarPath.end(); ++it) {
+            cout<<it->first<<'\t'<<it->second<<endl;
+        }
+        
+        cout<<endl<<"Bezier:"<<endl;
+        
         
         vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
         
@@ -1028,6 +1161,8 @@ int main(int argc, char *argv[])
                 fDistanceToPosition=t_BL2BLE;
         }
 
+        cout<<endl<<"Distance to Position: "<<fDistanceToPosition<<endl;
+            
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
         Path vecWaypointsHeadings1;
@@ -1036,6 +1171,8 @@ int main(int argc, char *argv[])
         
         vector<CubicBezier> tTrajectory1= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
+        cout<<"Bezier 2"<<endl;
+            
         FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         }
     }
