@@ -352,7 +352,7 @@ vector<CubicBezier> TrajectoryFromWaypointsAndHeadings(vector<Location> input) {
 
 /*
 void TrackRobot(int inputId, PerspectiveCorrection correction, FieldComputer fc) {
-    FieldData data = fc.getFieldData();
+    data = fc.getFieldData();
     while(true){
         for (unsigned i = 0; i < data.robots.size(); i++){
             if (data.robots[i].id() == inputId){
@@ -447,30 +447,30 @@ int main(int argc, char *argv[])
     for (unsigned i = 0; i < boxes.size(); i++) {
         if (boxes[i].id() == 102) {
             // Red 1
-            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+            vecBoxes.push_back(Box(boxes[i],RED,correction));
         } else if (boxes[i].id() == 112) {
             // Red 2
-            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+            vecBoxes.push_back(Box(boxes[i],RED,correction));
         } else if (boxes[i].id() == 101) {
             // Blue 1
-            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+            vecBoxes.push_back(Box(boxes[i],BLUE,correction));
         } else if (boxes[i].id() == 103) {
             // Blue 2
-            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+            vecBoxes.push_back(Box(boxes[i],BLUE,correction));
         }
     }
     
     for (unsigned i = 0; i < data.robots.size(); i++){
         if (data.robots[i].id() == RED_ID){
-            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            vecBots.push_back(Bot(data.robots[i],RED,correction));
             cout << "Found Red" << endl;
         }
         else if (data.robots[i].id() == GREEN_ID){
-            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            vecBots.push_back(Bot(data.robots[i],GREEN,correction));
             cout << "Found Green" << endl;
         }
         else if (data.robots[i].id() == BLUE_ID){
-            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            vecBots.push_back(Bot(data.robots[i],BLUE,correction));
             cout << "Found Blue" << endl;
         }
     }
@@ -487,12 +487,12 @@ int main(int argc, char *argv[])
     /* STEP 1 : Move blue boxes in Red Zone to the Parking Space */
     
     /* Get centers of the boxes in cm and put them in a TVecCoord */
-    TVecCoord tCenterBoxes;
+    TVecCoord tCenterBoxes1;
     for (unsigned i = 0; i < vecBoxes.size(); i++) {
-        tCenterBoxes.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
+        tCenterBoxes1.push_back(make_pair(vecBoxes[i].xCm,vecBoxes[i].yCm));
     }
     /* Map obstacles */
-    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes);
+    TVecCoord tObstacles=P.MapObstacles(tCenterBoxes1);
     
     /* Push blue (least priority) boxes which are in the red zone into the parking space*/
     for (unsigned i = 0; i < vecBoxes.size(); i++) {
@@ -500,15 +500,15 @@ int main(int argc, char *argv[])
         if (!vecBoxes[i].isHighPriority && vecBoxes[i].currentStatus==WRONG_SIDE) {
             
             /* Move blue robot from its initial position to blue box */
-            Location tPushStart=getPushStartPosition(EAST);
+            Location tPushStart=vecBoxes[i].getPushStartPosition(EAST);
             Location tRobotStart;
             Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
             int nPusherId;
             
-            for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
-                if (it->m_tBotColor==Color.BLUE) {
-                    tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
-                    nPusherId=it->id();
+            for (vector<Bot>::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+                if (it->m_tBotColor==BLUE) {
+                    tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
+                    nPusherId=it->m_tBot.id();
                     break;
                 }
             }
@@ -516,9 +516,9 @@ int main(int argc, char *argv[])
             Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
             
             TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
-            TVecCoord tPath=P.SampledPath(tAStarPath);
+            TVecCoord tPath=P.SamplePath(tAStarPath);
             
-            Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+            Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
             
             vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
             
@@ -537,13 +537,13 @@ int main(int argc, char *argv[])
             
             Location tPushGoal=Location(tPushStart.X+fDistanceToParking,tPushStart.Y,tPushStart.Orientation);
             
-            Path vecWaypointsHeadings;
-            vecWaypointsHeadings.push_back(tPushStart);
-            vecWaypointsHeadings.push_back(tPushGoal);
+            Path vecWaypointsHeadings1;
+            vecWaypointsHeadings1.push_back(tPushStart);
+            vecWaypointsHeadings1.push_back(tPushGoal);
             
-            vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+            vector<CubicBezier> tTrajectory1= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
             
-            FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
             
         }
     }
@@ -552,11 +552,11 @@ int main(int argc, char *argv[])
     
     /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
     
-    FieldData data = fc.getFieldData();
+    data = fc.getFieldData();
     
-    vector<Entity> boxes;
-    vector<Box> vecBoxes;
-    vector<Bot> vecBots;
+    boxes.clear();
+    vecBoxes.clear();
+    vecBots.clear();
 
     while(boxes.size() < 4){
         data = fc.getFieldData();
@@ -573,30 +573,30 @@ int main(int argc, char *argv[])
     for (unsigned i = 0; i < boxes.size(); i++) {
         if (boxes[i].id() == 102) {
             // Red 1
-            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+            vecBoxes.push_back(Box(boxes[i],RED,correction));
         } else if (boxes[i].id() == 112) {
             // Red 2
-            vecBoxes.push_back(Box(boxes[i],Color.RED,correction));
+            vecBoxes.push_back(Box(boxes[i],RED,correction));
         } else if (boxes[i].id() == 101) {
             // Blue 1
-            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+            vecBoxes.push_back(Box(boxes[i],BLUE,correction));
         } else if (boxes[i].id() == 103) {
             // Blue 2
-            vecBoxes.push_back(Box(boxes[i],Color.BLUE,correction));
+            vecBoxes.push_back(Box(boxes[i],BLUE,correction));
         }
     }
     
     for (unsigned i = 0; i < data.robots.size(); i++){
         if (data.robots[i].id() == RED_ID){
-            vecBots.push_back(Bot(data.robots[i],Color.RED,correction));
+            vecBots.push_back(Bot(data.robots[i],RED,correction));
             cout << "Found Red" << endl;
         }
         else if (data.robots[i].id() == GREEN_ID){
-            vecBots.push_back(Bot(data.robots[i],Color.GREEN,correction));
+            vecBots.push_back(Bot(data.robots[i],GREEN,correction));
             cout << "Found Green" << endl;
         }
         else if (data.robots[i].id() == BLUE_ID){
-            vecBots.push_back(Bot(data.robots[i],Color.BLUE,correction))
+            vecBots.push_back(Bot(data.robots[i],BLUE,correction));
             cout << "Found Blue" << endl;
         }
     }
@@ -614,15 +614,15 @@ int main(int argc, char *argv[])
         if (vecBoxes[i].isHighPriority && boxes[i].currentStatus==WRONG_SIDE) {
             
             /* Move red robot from its initial position to red box */
-            Location tPushStart=getPushStartPosition(WEST);
+            Location tPushStart=vecBoxes[i].getPushStartPosition(WEST);
             Location tRobotStart;
             Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
             int nPusherId;
             
-            for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
-                if (it->m_tBotColor==Color.BLUE) {
-                    tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
-                    nPusherId=it->id();
+            for (vector<Bot>::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+                if (it->m_tBotColor==BLUE) {
+                    tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
+                    nPusherId=it->m_tBot.id();
                     break;
                 }
             }
@@ -630,9 +630,9 @@ int main(int argc, char *argv[])
             Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
             
             TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
-            TVecCoord tPath=P.SampledPath(tAStarPath);
+            TVecCoord tPath=P.SamplePath(tAStarPath);
             
-            Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+            Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
             
             vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
             
@@ -651,24 +651,24 @@ int main(int argc, char *argv[])
 
             Location tPushGoal=Location(tPushStart.X+fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
             
-            Path vecWaypointsHeadings;
-            vecWaypointsHeadings.push_back(tPushStart);
-            vecWaypointsHeadings.push_back(tPushGoal);
+            Path vecWaypointsHeadings1;
+            vecWaypointsHeadings1.push_back(tPushStart);
+            vecWaypointsHeadings1.push_back(tPushGoal);
             
-            vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+            vector<CubicBezier> tTrajectory1=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
-            FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+            FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         }
     }
     
     /* STEP 3 : Move red boxes to the End Zone */
     
     /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
-    FieldData data = fc.getFieldData();
+    data = fc.getFieldData();
     
-    vector<Entity> boxes;
-    vector<Box> vecBoxes;
-    vector<Bot> vecBots;
+    boxes.clear();
+    vecBoxes.clear();
+    vecBots.clear();
     
     while(boxes.size() < 4){
         data = fc.getFieldData();
@@ -726,15 +726,15 @@ int main(int argc, char *argv[])
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
         
         /* Move red robot from its current position to red box */
-        Location tPushStart=getPushStartPosition(NORTH);
+        Location tPushStart=vecBoxes[i].getPushStartPosition(NORTH);
         Location tRobotStart;
         Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
         int nPusherId;
         
         for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
             if (it->m_tBotColor==Color.BLUE) {
-                tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
-                nPusherId=it->id();
+                tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
+                nPusherId=it->m_tBot.id();
                 break;
             }
         }
@@ -742,9 +742,9 @@ int main(int argc, char *argv[])
         Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
         
         TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
-        TVecCoord tPath=P.SampledPath(tAStarPath);
+        TVecCoord tPath=P.SamplePath(tAStarPath);
         
-        Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+        Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,tRobotStart.Orientation,tPushStart.Orientation);
         
         vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
         
@@ -763,13 +763,13 @@ int main(int argc, char *argv[])
 
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
-        Path vecWaypointsHeadings;
-        vecWaypointsHeadings.push_back(tPushStart);
-        vecWaypointsHeadings.push_back(tPushGoal);
+        Path vecWaypointsHeadings1;
+        vecWaypointsHeadings1.push_back(tPushStart);
+        vecWaypointsHeadings1.push_back(tPushGoal);
         
-        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        vector<CubicBezier> tTrajectory1= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
-        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         
     }
     
@@ -777,11 +777,11 @@ int main(int argc, char *argv[])
     /* STEP 4 : Move blue boxes in Parking Space to the Blue Zone */
     
     /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
-    FieldData data = fc.getFieldData();
+    data = fc.getFieldData();
     
-    vector<Entity> boxes;
-    vector<Box> vecBoxes;
-    vector<Bot> vecBots;
+    boxes.clear();
+    vecBoxes.clear();
+    vecBots.clear();
     
     while(boxes.size() < 4){
         data = fc.getFieldData();
@@ -841,15 +841,15 @@ int main(int argc, char *argv[])
         
         /* Move blue robot from its current position to blue box (with correct orientation) */
         
-        Location tPushStart=getPushStartPosition(WEST);
+        Location tPushStart=vecBoxes[i].getPushStartPosition(WEST);
         Location tRobotStart;
         Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
         int nPusherId;
         
-        for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+        for (vector<Bot>::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
             if (it->m_tBotColor==Color.BLUE) {
-                tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
-                nPusherId=it->id();
+                tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
+                nPusherId=it->m_tBot.id();
                 break;
             }
         }
@@ -857,9 +857,9 @@ int main(int argc, char *argv[])
         Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
         
         TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
-        TVecCoord tPath=P.SampledPath(tAStarPath);
+        TVecCoord tPath=P.SamplePath(tAStarPath);
         
-        Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+        Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
         
         vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
         
@@ -880,24 +880,24 @@ int main(int argc, char *argv[])
       
         Location tPushGoal=Location(tPushStart.X-fDistanceToPosition,tPushStart.Y,tPushStart.Orientation);
         
-        Path vecWaypointsHeadings;
-        vecWaypointsHeadings.push_back(tPushStart);
-        vecWaypointsHeadings.push_back(tPushGoal);
+        Path vecWaypointsHeadings1;
+        vecWaypointsHeadings1.push_back(tPushStart);
+        vecWaypointsHeadings1.push_back(tPushGoal);
         
-        vector<CubicBezier> tTrajectory=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        vector<CubicBezier> tTrajectory1=TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
-        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         
     }
     
     /* STEP 5 : Move blue boxes to the End Zone */
     
     /* REFRESH BOX COORDINATES (GET DATA FROM SERVER AGAIN)*/
-    FieldData data = fc.getFieldData();
+    data = fc.getFieldData();
     
-    vector<Entity> boxes;
-    vector<Box> vecBoxes;
-    vector<Bot> vecBots;
+    boxes.clear();
+    vecBoxes.clear();
+    vecBots.clear();
     
     while(boxes.size() < 4){
         data = fc.getFieldData();
@@ -954,15 +954,15 @@ int main(int argc, char *argv[])
     for (TVecCoord::iterator it=tCenterBoxes.begin(); it!=tCenterBoxes.end(); ++it) {
         
         /* Move blue robot from its current position to blue box */
-        Location tPushPosition=getPushStartPosition(NORTH);
+        Location tPushPosition=vecBoxes[i].getPushStartPosition(NORTH);
         Location tRobotStart;
         Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
         int nPusherId;
         
-        for (vecBots::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
+        for (vector<Bot>::iterator it=vecBots.begin(); it!=vecBots.end(); ++it) {
             if (it->m_tBotColor==Color.BLUE) {
-                tRobotStart=Location(m_tBot.m_fXCm,m_tBot.m_fYCm,m_tBot.theta);
-                nPusherId=it->id();
+                tRobotStart=Location(it->m_fXCm,it->m_fYCm,it->m_tBot.theta());
+                nPusherId=it->m_tBot.id();
                 break;
             }
         }
@@ -970,9 +970,9 @@ int main(int argc, char *argv[])
         Coordinate tStart=pair<float,float>(tRobotStart.X,tRobotStart.Y);
         
         TVecCoord tAStarPath=P.AStarSearch(tStart,tGoal,tObstacles);
-        TVecCoord tPath=P.SampledPath(tAStarPath);
+        TVecCoord tPath=P.SamplePath(tAStarPath);
         
-        Path vecWaypointsHeadings=GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
+        Path vecWaypointsHeadings=P.GetWaypointsAndHeadings(tPath,,tPushStart.Orientation);
         
         vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
         
@@ -991,13 +991,13 @@ int main(int argc, char *argv[])
 
         Location tPushGoal=Location(tPushStart.X,tPushStart.Y+fDistanceToPosition,tPushStart.Orientation);
         
-        Path vecWaypointsHeadings;
-        vecWaypointsHeadings.push_back(tPushStart);
-        vecWaypointsHeadings.push_back(tPushGoal);
+        Path vecWaypointsHeadings1;
+        vecWaypointsHeadings1.push_back(tPushStart);
+        vecWaypointsHeadings1.push_back(tPushGoal);
         
-        vector<CubicBezier> tTrajectory= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings);
+        vector<CubicBezier> tTrajectory1= TrajectoryFromWaypointsAndHeadings(vecWaypointsHeadings1);
         
-        FollowTrajectory(nPusherId,fc,correction,tTrajectory);
+        FollowTrajectory(nPusherId,fc,correction,tTrajectory1);
         
     }
     
