@@ -215,14 +215,19 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
 /////////////////////////////////////////////////
 /////////////////////////////////////////////////
 
-TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){ // if delta x close to zero => NaN, change that !
+TVecCoord Planner::SamplePath(TVecCoord t_AStarPath){
     
     TVecCoord tPath;
     float fPrevSlope=0;
     float fCurrSlope;
     
     for (int i=1; i<t_AStarPath.size(); ++i) {
+        if (abs(t_AStarPath[i-1].first-t_AStarPath[i].first)<Epsilon) {
+            fCurrSlope=1000;
+        }
+        else {
         fCurrSlope=(t_AStarPath[i-1].second-t_AStarPath[i].second)/(t_AStarPath[i-1].first-t_AStarPath[i].first);
+        }
         if (fCurrSlope!=fPrevSlope) {
             tPath.push_back(make_pair(t_AStarPath[i-1].first,t_AStarPath[i-1].second));
         }
