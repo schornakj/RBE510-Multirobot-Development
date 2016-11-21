@@ -99,8 +99,9 @@ TVecCoord Planner::MapObstacles(TVecCoord t_centerBoxes){
     Coordinate tMin;
     Coordinate tMax;
     
-    float fRadius=sqrt(2)/2*BoxSize; //circumsquare of box
-    
+    //float fRadius=sqrt(2)/2*BoxSize; //circumsquare of box
+    float fRadius=BoxSize/2;
+
     for (TVecCoord::iterator it=t_centerBoxes.begin(); it!=t_centerBoxes.end(); ++it) {
         fCenterX=it->first;
         fCenterY=it->second;

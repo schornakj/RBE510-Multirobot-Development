@@ -24,7 +24,7 @@ using namespace cv;
 
 #define RED_ID 5
 #define GREEN_ID 0
-#define BLUE_ID 4
+#define BLUE_ID 3
 
 //////////////// REMOVE AS ALREADY DEFINED IN PLANNER.H /////////////////
 
@@ -33,7 +33,7 @@ double fieldWidth = 231.14;
 double fieldHeight = 109.86;
 
 //  Dimension of box/entity
-float boxdim = 7.63;
+float boxdim = 20;
 
 const float t_BR2RR=68;
 const float t_BL2RL=65;
@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
             /* Push box to Parking Space */
             vecBoxes[i].getDiscretePosition();
             
-            float fDistanceToParking;
+            float fDistanceToParking=50;
             if (vecBoxes[i].currentPosition==RED_RIGHT) {
                 fDistanceToParking=31; // update with real value and add as global const float
             }

@@ -12,8 +12,8 @@ using namespace std;
 const float PI = 3.1415927;
 const float ArenaWidth=231.14; //in X direction
 const float ArenaDepth=109.86; //in Y direction
-const float BoxSize=20;
-const float MaxSubdiv=5;
+const float BoxSize=15;
+const float MaxSubdiv=2;
 const float Epsilon=0.001;
 
 struct Location {
@@ -55,7 +55,7 @@ struct Distance {
 struct CompareXandYCoord {
     float x,y;
     CompareXandYCoord(float x,float y): x(x), y(y){}
-    bool operator()(const Coordinate& obj){return abs(obj.first-x)<Epsilon && abs(obj.second-y)<Epsilon;}
+    bool operator()(const Coordinate& obj){return abs(obj.first-x)<MaxSubdiv && abs(obj.second-y)<MaxSubdiv;}
 };
 
 class Planner {
