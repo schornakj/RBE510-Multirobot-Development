@@ -20,7 +20,7 @@ using namespace cv;
 
 #define ALLOWED_DISTANCE 10 // Allowed distance from target is in pixels.
 
-#define BOX_OFFSET 10 // Distance in cm that the robot should stop driving from the box when preparing to push it
+#define BOX_OFFSET 15 // Distance in cm that the robot should stop driving from the box when preparing to push it
 
 #define RED_ID 3
 #define GREEN_ID 0
@@ -35,16 +35,16 @@ double fieldHeight = 109.86;
 //  Dimension of box/entity
 float boxdim = 7.63;
 
-const float t_BR2RR=68;
+const float t_BR2RR=70;
 const float t_BL2RL=75;
-const float t_RR2RRE=70;
-const float t_RL2RLE=20;
-const float t_P2BR=140;
+const float t_RR2RRE=75;
+const float t_RL2RLE=30;
+const float t_P2BR=120;
 const float t_P2BL=107;
 const float t_BRy=26;
 const float t_BLy=74;
 const float t_BR2BRE=75;
-const float t_BL2BLE=37;
+const float t_BL2BLE=50;
 /*
 RED_RIGHT=(138,27)
 RED_LEFT=(167,70)
@@ -556,12 +556,12 @@ int main(int argc, char *argv[])
             /* Push box to Parking Space */
             vecBoxes[i].getDiscretePosition();
             
-            float fDistanceToParking=50;
+            float fDistanceToParking=70;
             if (vecBoxes[i].currentPosition==RED_RIGHT) {
-                fDistanceToParking=31; // update with real value and add as global const float
+                fDistanceToParking=60; // update with real value and add as global const float
             }
             else if(vecBoxes[i].currentPosition==RED_LEFT){ // else would be enough
-                fDistanceToParking=19; // update with real value and add as global const float 19,31,45,60
+                fDistanceToParking=25; // update with real value and add as global const float 19,31,45,60
             }
             
             cout<<endl<<"Distance to Parking: "<<fDistanceToParking<<endl;
@@ -703,7 +703,7 @@ int main(int argc, char *argv[])
             /* Push box to available position in Red Zone */
             vecBoxes2[i].getDiscretePosition();
             
-            float fDistanceToPosition=60;
+            float fDistanceToPosition=70;
             
             if(vecBoxes2[i].currentPosition==BLUE_RIGHT){
                 fDistanceToPosition=t_BR2RR;
@@ -1057,11 +1057,11 @@ int main(int argc, char *argv[])
         
         float fDistanceToPosition=70;
 
-        if(abs(vecBoxes4[i].yCm- t_BRy)<=5){
+        if(abs(vecBoxes4[i].yCm- t_BRy)<=10){
             fDistanceToPosition=t_P2BR;
         }
                
-        else if(abs(vecBoxes4[i].yCm-t_BLy)<=5){
+        else if(abs(vecBoxes4[i].yCm-t_BLy)<=10){
             fDistanceToPosition=t_P2BL;
         }
         
@@ -1204,7 +1204,7 @@ int main(int argc, char *argv[])
         
         vecBoxes5[i].getDiscretePosition();
         
-        float fDistanceToPosition=50;
+        float fDistanceToPosition=40;
        if(vecBoxes5[i].currentPosition==BLUE_RIGHT){
                 fDistanceToPosition=t_BR2BRE;
         }
