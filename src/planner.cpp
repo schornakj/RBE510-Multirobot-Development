@@ -177,7 +177,7 @@ TVecCoord Planner::AStarSearch(Coordinate t_start, Coordinate t_goal, TVecCoord 
             float fNeighborX=it1->X;
             float fNeighborY=it1->Y;
             float fNeighborCost=it1->f;
-            if ((abs(fNeighborX-fXGoal)<m_fStep/2) && (abs(fNeighborY-fYGoal)<m_fStep/2)) {
+            if ((pow(fNeighborX-fXGoal,2) + pow(fNeighborY-fYGoal,2)) < 2*pow(m_fStep,2)) {
                 bGoalReached=true;
                 tClosed.push_back(tCurrent);
                 tClosed.push_back(*it1);
