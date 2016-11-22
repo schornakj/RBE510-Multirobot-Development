@@ -23,8 +23,8 @@ using namespace cv;
 #define BOX_OFFSET 10 // Distance in cm that the robot should stop driving from the box when preparing to push it
 
 #define RED_ID 3
-#define GREEN_ID 5
-#define BLUE_ID 4
+#define GREEN_ID 0
+#define BLUE_ID 2
 
 //////////////// REMOVE AS ALREADY DEFINED IN PLANNER.H /////////////////
 
@@ -194,10 +194,10 @@ void getDiscretePosition(){
         */
         Position p_output;
         if (boxColor == RED) {
-            if (yCm<fieldHeight*0.25) {
+            if (yCm<fieldHeight*0.5) {
                 p_output=RED_RIGHT;
             }
-            else if (yCm > fieldHeight*0.25 && yCm<fieldHeight*0.75){
+            else if (yCm > fieldHeight*0.5 && yCm<fieldHeight*0.75){
                 p_output=RED_LEFT;
             }
             else if (yCm > fieldHeight*0.75){
@@ -211,10 +211,10 @@ void getDiscretePosition(){
         }
         else if (boxColor ==BLUE){
             if (xCm < fieldWidth/2){
-                if (yCm < fieldHeight*0.25){
+                if (yCm < fieldHeight*0.5){
                     p_output=BLUE_RIGHT;
                 }
-                else if (yCm > fieldHeight*0.25 && yCm < fieldHeight*0.75){
+                else if (yCm > fieldHeight*0.5 && yCm < fieldHeight*0.75){
                     p_output=BLUE_LEFT;
                 }
                 else if (yCm > fieldHeight*0.75){
@@ -540,7 +540,6 @@ int main(int argc, char *argv[])
             
             cout<<endl<<"Waypoints:"<<endl;
            
-           
             for (Path::iterator it=vecWaypointsHeadings.begin(); it!=vecWaypointsHeadings.end(); ++it) {
                cout<<it->X<<'\t'<<it->Y<<'\t'<<it->Orientation<<endl;
             }
@@ -648,7 +647,7 @@ int main(int argc, char *argv[])
         if (vecBoxes2[i].isHighPriority && vecBoxes2[i].currentStatus==WRONG_SIDE) {
             
             /* Move red robot from its initial position to red box */
-            Location tPushStart=vecBoxes2[i].getPushStartPosition(WEST);
+            Location tPushStart=vecBoxes2[i].getPushStartPosition(EAST);
             Location tRobotStart;
             Coordinate tGoal=pair<float,float>(tPushStart.X,tPushStart.Y); //
             int nPusherId;
@@ -1056,7 +1055,7 @@ int main(int argc, char *argv[])
         
         vecBoxes4[i].getDiscretePosition();
         
-        float fDistanceToPositio=70;
+        float fDistanceToPosition=70;
 
         if(abs(vecBoxes4[i].yCm- t_BRy)<=5){
             fDistanceToPosition=t_P2BR;
